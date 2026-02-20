@@ -2,26 +2,26 @@ name: Deploy to Dreamhost
 
 on:
   push:
-	branches:
-	  - main
+    branches:
+      - main
 
 jobs:
   deploy:
-	runs-on: ubuntu-latest
-	steps:
-	  - uses: actions/checkout@v3
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
 
-	  - name: Install dependencies
-		run: npm install
+      - name: Install dependencies
+        run: npm install
 
-	  - name: Build
-		run: npm run build
+      - name: Build
+        run: npm run build
 
-	  - name: Deploy via SFTP
-		uses: wlixcc/SFTP-Deploy-Action@v1.2.4
-		with:
-		  server: iad1-shared-e1-09.dreamhost.com
-		  username: ${{ secrets.SFTP_USER }}
-		  password: ${{ secrets.SFTP_PASSWORD }}
-		  local_path: ./dist/*
-		  remote_path: /home/dh_hp35cg/kevintraywick.com/fast-french
+      - name: Deploy via SFTP
+        uses: wlixcc/SFTP-Deploy-Action@v1.2.4
+        with:
+          server: iad1-shared-e1-09.dreamhost.com
+          username: ${{ secrets.SFTP_USER }}
+          password: ${{ secrets.SFTP_PASSWORD }}
+          local_path: ./dist/*
+          remote_path: /home/dh_hp35cg/kevintraywick.com/fast-french
