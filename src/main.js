@@ -246,6 +246,33 @@ const COFFEE_SHOP = [
 ];
 
 // ============================================
+// CAFÉ ORDERING PHRASES (Round 5 - "Tell Me About It")
+// ============================================
+const CAFE_ORDERING = [
+    // Ordering drinks
+    { french: "Un café crème", english: "A coffee with cream" },
+    { french: "Un chocolat chaud", english: "A hot chocolate" },
+    { french: "Un thé vert", english: "A green tea" },
+    { french: "Un verre d'eau", english: "A glass of water" },
+    { french: "Un jus d'orange", english: "An orange juice" },
+    // Ordering food
+    { french: "Un pain au chocolat", english: "A chocolate croissant" },
+    { french: "Un pain aux raisins", english: "A raisin pastry" },
+    { french: "Une tarte aux pommes", english: "An apple tart" },
+    { french: "Un éclair", english: "An éclair" },
+    { french: "Une quiche", english: "A quiche" },
+    // Paying & polite phrases
+    { french: "C'est combien ?", english: "How much is it?" },
+    { french: "Je peux payer par carte ?", english: "Can I pay by card?" },
+    { french: "Gardez la monnaie", english: "Keep the change" },
+    { french: "C'est délicieux", english: "It's delicious" },
+    { french: "La carte, s'il vous plaît", english: "The menu, please" },
+    { french: "Encore un, s'il vous plaît", english: "Another one, please" },
+    { french: "C'est tout", english: "That's all" },
+    { french: "Bonne journée", english: "Have a nice day" },
+];
+
+// ============================================
 // FRENCH ROUND NUMBERS
 // ============================================
 const FRENCH_NUMBERS = [
@@ -311,6 +338,10 @@ const state = {
     
     // Round 5 color mode
     colorMode: false,
+    
+    // Round 5 listen mode ("Tell Me About It")
+    listenMode: false,
+    listenSpawnIndex: 0,
     
     // Paddle breakout mode (Round 4+)
     shooterMode: false,
@@ -583,6 +614,15 @@ function setupRound() {
     state.iconQueue = [];
     state.phraseMode = false;
     state.colorMode = false;
+    state.listenMode = false;
+    state.listenSpawnIndex = 0;
+    // Clear any per-card reveal timers from listen mode
+    for (const card of state.cards) {
+        if (card.revealTimer) {
+            clearTimeout(card.revealTimer);
+            card.revealTimer = null;
+        }
+    }
     state.comboMode = false;
     state.shooterMode = false;
     state.missiles = [];
@@ -627,8 +667,8 @@ for (const m of state.missiles) {
     }
     state.missiles = [];
     
-    // Round 3+: Paddle Breakout (also R5+)
-    if (state.currentRound === 3 || state.currentRound >= 5) {
+    // Round 3+: Paddle Breakout (also R6+)
+    if (state.currentRound === 3 || state.currentRound >= 6) {
 state.iconMode = false;
 state.phraseMode = false;
 state.colorMode = false;
@@ -769,6 +809,86 @@ updateCardCount();
 return state.roundWords.length > 0;
     }
     
+    // Round 5: "Tell Me About It" - Listen & Match mode
+    if (state.currentRound === 5) {
+        console.log('=== ROUND 5 SETUP START ===');
+        state.listenMode = true;
+        state.roundTheme = 'Tell Me About It';
+
+        const isLearned = (word) => {
+            const key = normalizeFrench(word.french);
+            const progress = state.wordProgress[key];
+            return progress && progress.learned;
+        };
+
+        // Build word pool: mostly café + ordering, some unlearned from main
+        const cafePool = [...FRENCH_CAFE, ...CAFE_ORDERING];
+        const shopPool2 = COFFEE_SHOP.map(w => ({ french: w.french, english: w.english }));
+        console.log('R5 pools:', cafePool.length, 'cafe +', shopPool2.length, 'shop');
+        
+        // Deduplicate by normalized French
+        const seenKeys = new Set();
+        const allCafe = [];
+        for (const w of [...cafePool, ...shopPool2]) {
+            const key = normalizeFrench(w.french);
+            if (!seenKeys.has(key)) {
+                seenKeys.add(key);
+                allCafe.push(w);
+            }
+        }
+        
+        // Filter: keep unlearned + 10% learned for reinforcement
+        let cafeSlots = allCafe.filter(w => {
+            if (isLearned(w)) return Math.random() < 0.1;
+            return true;
+        });
+        if (cafeSlots.length < 8) cafeSlots = [...allCafe];
+        
+        // Add ~25% unlearned from main VOCABULARY
+        const mainBase = VOCABULARY.filter(w => !w.tags || (!w.tags.includes('number') && !w.tags.includes('color')));
+        const unlearnedMain = mainBase.filter(w => !isLearned(w));
+        const mainCount = Math.max(3, Math.floor(cafeSlots.length * 0.25));
+        const mainSlots = unlearnedMain.sort(() => Math.random() - 0.5).slice(0, mainCount).map(w => ({
+            french: w.french,
+            english: w.english
+        }));
+        
+        // Combine, deduplicate, shuffle
+        const combined = [...cafeSlots, ...mainSlots];
+        const finalKeys = new Set();
+        const finalWords = [];
+        for (const w of combined.sort(() => Math.random() - 0.5)) {
+            const key = normalizeFrench(w.french);
+            if (!finalKeys.has(key)) {
+                finalKeys.add(key);
+                finalWords.push(w);
+            }
+        }
+
+        state.roundWords = finalWords.slice(0, 25).map(w => ({
+            ...w,
+            key: normalizeFrench(w.french)
+        }));
+
+        console.log('R5 roundWords:', state.roundWords.length, 'listenMode:', state.listenMode);
+        if (state.roundWords.length > 0) {
+            console.log('R5 first word:', state.roundWords[0].french, '->', state.roundWords[0].english);
+        }
+
+        state.roundChallenges = [];
+        state.matchedKeys.clear();
+        state.matchedSteps = 0;
+        state.activePairs.clear();
+        state.multiStep = null;
+
+        roundNumberEl.textContent = frenchRoundNumber(state.currentRound);
+        roundThemeEl.textContent = ` - ${state.roundTheme}`;
+        updateCardCount();
+
+        console.log('=== ROUND 5 SETUP COMPLETE ===', state.roundWords.length, 'words');
+        return state.roundWords.length > 0;
+    }
+    
     // Rounds 1 & 2: Normal matching mode
     const targetPairs = Math.min(
 state.roundBasePairs + (state.currentRound - 1) * state.roundIncrement,
@@ -844,6 +964,7 @@ state.roundChallenges = [];
 
 function startSpawning() {
     let pairIndex = 0;
+    console.log('startSpawning called - modes:', { listen: state.listenMode, typing: state.typingMode, color: state.colorMode, icon: state.iconMode, phrase: state.phraseMode, shooter: state.shooterMode }, 'roundWords:', state.roundWords.length);
 
     state.spawnInterval = setInterval(() => {
 if (state.paused) return;
@@ -856,6 +977,19 @@ if (pairIndex < state.roundWords.length) {
         // Color mode: spawn color disc + word card
         spawnColorDiscAt(pairIndex);
         spawnWordCardAt(pairIndex);
+    } else if (state.listenMode) {
+        // Listen mode: spawn first 10 pairs, rest added one at a time on match
+        const initialCount = Math.min(10, state.roundWords.length);
+        if (pairIndex === 0) console.log('R5 spawning: initialCount =', initialCount, 'totalWords =', state.roundWords.length);
+        if (pairIndex < initialCount) {
+            console.log('R5 spawning pair', pairIndex, ':', state.roundWords[pairIndex]?.french);
+            spawnMysteryCardAt(pairIndex);
+            spawnAnswerCardAt(pairIndex);
+        }
+        // Track where progressive spawning picks up
+        if (pairIndex === initialCount - 1) {
+            state.listenSpawnIndex = initialCount;
+        }
     } else if (state.iconMode) {
         // Icon mode: only spawn word cards (icon is in center)
         spawnWordCardAt(pairIndex);
@@ -882,7 +1016,7 @@ if (pairIndex >= state.roundWords.length) {
     clearInterval(state.spawnInterval);
     state.spawnInterval = null;
 
-    if (!state.typingMode && !state.iconMode && !state.phraseMode && !state.colorMode && state.roundChallenges && state.roundChallenges.length) {
+    if (!state.typingMode && !state.iconMode && !state.phraseMode && !state.colorMode && !state.listenMode && state.roundChallenges && state.roundChallenges.length) {
         for (let i = 0; i < state.roundChallenges.length; i++) {
             spawnQuantityCardAt(i);
         }
@@ -902,7 +1036,14 @@ function reconcileOrphans() {
     // If for any reason a pair has only one card present, respawn its missing mate.
     for (const [key, entry] of state.activePairs.entries()) {
 if (state.matchedKeys.has(key)) continue;
-if (!entry.emoji) {
+if (state.listenMode) {
+    const idx = entry.pairIndex ?? state.roundWords.findIndex(w => w.key === key);
+    if (idx >= 0) {
+        if (!entry.mystery) spawnMysteryCardAt(idx);
+        if (!entry.answer) spawnAnswerCardAt(idx);
+    }
+    continue;
+} else if (!entry.emoji) {
     const idx = entry.pairIndex ?? state.roundWords.findIndex(w => w.key === key);
     if (idx >= 0) {
         if (state.colorMode) {
@@ -990,9 +1131,41 @@ function startNextRound() {
     
     // Show round title card with instructions
     const isCoffeeShopRound = state.currentRound === 4;
-    const isShooterRound = state.currentRound === 3 || state.currentRound >= 5;
+    const isListenRound = state.currentRound === 5;
+    const isShooterRound = state.currentRound === 3 || state.currentRound >= 6;
     
-    if (isCoffeeShopRound) {
+    if (isListenRound) {
+        // Show special instructions for listen & match round
+        console.log('R5: Showing title overlay');
+        // Ensure no stale overlays
+        validationOverlay.classList.remove('show');
+        audioSetupOverlay.classList.remove('show');
+        roundTitleOverlay.classList.add('show');
+        roundTitleText.textContent = `Round ${frenchRoundNumber(state.currentRound)} - Tell Me About It`;
+        roundTitleInstructions.textContent = 'Tap 👄 to hear French · Then tap the matching English!';
+        
+        try {
+            setupRound();
+            console.log('R5: setupRound succeeded, roundWords:', state.roundWords.length, 'listenMode:', state.listenMode);
+        } catch (e) {
+            console.error('Round 5 setup failed:', e);
+        }
+        
+        setTimeout(() => {
+            console.log('R5: Title timeout fired, starting spawning. roundWords:', state.roundWords.length, 'listenMode:', state.listenMode);
+            console.log('R5: gameArea dimensions:', gameArea.offsetWidth, 'x', gameArea.offsetHeight);
+            console.log('R5: gameLoop active:', !!gameLoop);
+            roundTitleOverlay.classList.remove('show');
+            resetRoundTimer();
+            startRoundTimer();
+            startSpawning();
+            // Check after first spawn cycle
+            setTimeout(() => {
+                console.log('R5: After 1s - cards in state:', state.cards.length, 'DOM cards:', gameArea.querySelectorAll('.card').length);
+                console.log('R5: activePairs:', state.activePairs.size, 'listenSpawnIndex:', state.listenSpawnIndex);
+            }, 1000);
+        }, 3000);
+    } else if (isCoffeeShopRound) {
         // Show special instructions for coffee shop round
         roundTitleOverlay.classList.add('show');
         roundTitleText.textContent = `Round ${frenchRoundNumber(state.currentRound)} - Au Café`;
@@ -1011,8 +1184,8 @@ function startNextRound() {
     } else if (isShooterRound) {
         // Show special instructions for shooter mode
         roundTitleOverlay.classList.add('show');
-        roundTitleText.textContent = `Round ${frenchRoundNumber(state.currentRound)} - French Café`;
-        roundTitleInstructions.textContent = '← → move paddle · Catch the matching emojis!';
+        roundTitleText.textContent = `Round ${frenchRoundNumber(state.currentRound)} - Breakout!`;
+        roundTitleInstructions.innerHTML = '← → move paddle · Catch the matching emojis!<br><br><span style="color:#d32f2f;font-weight:600;">⚠️ Caution: Hitting the wrong word increases the speed of the emoji!</span>';
         
         // Setup round while showing title
         setupRound();
@@ -1080,9 +1253,35 @@ function skipRound() {
     
     // Show round title card with instructions
     const isCoffeeShopRound2 = state.currentRound === 4;
-    const isShooterRound2 = state.currentRound === 3 || state.currentRound >= 5;
+    const isListenRound2 = state.currentRound === 5;
+    const isShooterRound2 = state.currentRound === 3 || state.currentRound >= 6;
     
-    if (isCoffeeShopRound2) {
+    if (isListenRound2) {
+        console.log('R5 (skip): Showing title overlay');
+        roundTitleOverlay.classList.add('show');
+        roundTitleText.textContent = `Round ${frenchRoundNumber(state.currentRound)} - Tell Me About It`;
+        roundTitleInstructions.textContent = 'Tap 👄 to hear French · Then tap the matching English!';
+        
+        try {
+            setupRound();
+            console.log('R5 (skip): setupRound succeeded, roundWords:', state.roundWords.length, 'listenMode:', state.listenMode);
+        } catch (e) {
+            console.error('Round 5 (skip) setup failed:', e);
+        }
+        
+        setTimeout(() => {
+            console.log('R5 (skip): Title timeout fired, starting spawning. roundWords:', state.roundWords.length, 'listenMode:', state.listenMode);
+            console.log('R5 (skip): gameArea dimensions:', gameArea.offsetWidth, 'x', gameArea.offsetHeight);
+            console.log('R5 (skip): gameLoop active:', !!gameLoop);
+            roundTitleOverlay.classList.remove('show');
+            resetRoundTimer();
+            startRoundTimer();
+            startSpawning();
+            setTimeout(() => {
+                console.log('R5 (skip): After 1s - cards in state:', state.cards.length, 'DOM cards:', gameArea.querySelectorAll('.card').length);
+            }, 1000);
+        }, 3000);
+    } else if (isCoffeeShopRound2) {
         // Show special instructions for coffee shop round
         roundTitleOverlay.classList.add('show');
         roundTitleText.textContent = `Round ${frenchRoundNumber(state.currentRound)} - Au Café`;
@@ -1101,8 +1300,8 @@ function skipRound() {
     } else if (isShooterRound2) {
         // Show special instructions for shooter mode
         roundTitleOverlay.classList.add('show');
-        roundTitleText.textContent = `Round ${frenchRoundNumber(state.currentRound)} - French Café`;
-        roundTitleInstructions.textContent = '← → move paddle · Catch the matching emojis!';
+        roundTitleText.textContent = `Round ${frenchRoundNumber(state.currentRound)} - Breakout!`;
+        roundTitleInstructions.innerHTML = '← → move paddle · Catch the matching emojis!<br><br><span style="color:#d32f2f;font-weight:600;">⚠️ Caution: Hitting the wrong word increases the speed of the emoji!</span>';
         
         // Setup round while showing title
         setupRound();
@@ -1455,7 +1654,7 @@ function updateCardCount() {
     const totalChallenges = state.roundChallenges ? state.roundChallenges.length : 0;
     
     // In typing mode, icon mode, color mode, or shooter mode, each word is one step. Otherwise it's base pairs + challenge steps
-    const totalSteps = (state.typingMode || state.iconMode || state.colorMode || state.comboMode || state.shooterMode) ? totalBase : (totalBase + (totalChallenges * 2));
+    const totalSteps = (state.typingMode || state.iconMode || state.colorMode || state.comboMode || state.shooterMode || state.listenMode) ? totalBase : (totalBase + (totalChallenges * 2));
 
     matchedCountEl.textContent = state.matchedSteps;
     totalCountEl.textContent = totalSteps;
@@ -1757,6 +1956,126 @@ state.activePairs.set(key, { french: null, english: card, spawnTime: Date.now(),
     } else {
 state.activePairs.get(key).english = card;
 state.activePairs.get(key).pairIndex = index;
+    }
+
+    updateCardCount();
+}
+
+// Listen mode: spawn mystery "?" card
+function spawnMysteryCardAt(index) {
+    const wordData = state.roundWords[index];
+    if (!wordData) { console.warn('R5 mystery: no wordData at index', index); return; }
+    const key = wordData.key;
+
+    if (state.matchedKeys.has(key)) return;
+    const existing = state.activePairs.get(key);
+    if (existing && existing.mystery) return;
+
+    const id = cardIdCounter++;
+    const pos = getSpawnPosition();
+
+    const card = {
+        id,
+        type: 'mystery',
+        wordData,
+        pairIndex: index,
+        pairKey: key,
+        x: pos.x,
+        y: pos.y,
+        vx: pos.vx,
+        vy: pos.vy,
+        width: 0,
+        height: 0,
+        frozen: false,
+        element: null
+    };
+
+    const el = document.createElement('div');
+    el.className = 'card mystery-card';
+    el.dataset.id = id;
+    el.dataset.pairKey = key;
+    el.innerHTML = '<span class="mystery-icon">👄</span>';
+    el.style.left = pos.x + 'px';
+    el.style.top = pos.y + 'px';
+    gameArea.appendChild(el);
+
+    card.element = el;
+    card.width = el.offsetWidth;
+    card.height = el.offsetHeight;
+    state.cards.push(card);
+    console.log('R5 mystery card spawned:', wordData.french, 'at', Math.round(pos.x), Math.round(pos.y), 'size:', card.width, card.height);
+
+    if (!state.activePairs.has(key)) {
+        state.activePairs.set(key, { mystery: card, answer: null, spawnTime: Date.now(), pairIndex: index });
+    } else {
+        state.activePairs.get(key).mystery = card;
+        state.activePairs.get(key).pairIndex = index;
+    }
+
+    updateCardCount();
+}
+
+// Listen mode: spawn English answer card
+function spawnAnswerCardAt(index) {
+    const wordData = state.roundWords[index];
+    if (!wordData) return;
+    const key = wordData.key;
+
+    if (state.matchedKeys.has(key)) return;
+    const existing = state.activePairs.get(key);
+    if (existing && existing.answer) return;
+
+    const id = cardIdCounter++;
+    const pos = getSpawnPosition();
+
+    const card = {
+        id,
+        type: 'answer',
+        wordData,
+        pairIndex: index,
+        pairKey: key,
+        x: pos.x,
+        y: pos.y,
+        vx: pos.vx,
+        vy: pos.vy,
+        width: 0,
+        height: 0,
+        frozen: false,
+        element: null
+    };
+
+    const el = document.createElement('div');
+    el.className = 'card answer-card';
+    el.dataset.id = id;
+    el.dataset.pairKey = key;
+    el.textContent = wordData.english;
+    
+    // Size circle based on text length
+    const textLen = wordData.english.length;
+    let diameter, fontSize;
+    if (textLen <= 5) { diameter = 68; fontSize = 13; }
+    else if (textLen <= 10) { diameter = 82; fontSize = 13; }
+    else if (textLen <= 16) { diameter = 100; fontSize = 12; }
+    else if (textLen <= 22) { diameter = 118; fontSize = 11; }
+    else { diameter = 136; fontSize = 11; }
+    el.style.width = diameter + 'px';
+    el.style.height = diameter + 'px';
+    el.style.fontSize = fontSize + 'px';
+    
+    el.style.left = pos.x + 'px';
+    el.style.top = pos.y + 'px';
+    gameArea.appendChild(el);
+
+    card.element = el;
+    card.width = el.offsetWidth;
+    card.height = el.offsetHeight;
+    state.cards.push(card);
+
+    if (!state.activePairs.has(key)) {
+        state.activePairs.set(key, { mystery: null, answer: card, spawnTime: Date.now(), pairIndex: index });
+    } else {
+        state.activePairs.get(key).answer = card;
+        state.activePairs.get(key).pairIndex = index;
     }
 
     updateCardCount();
@@ -2297,6 +2616,125 @@ if (card.type === 'english') {
 return;
     }
 
+    // Listen mode ("Tell Me About It"): click mystery card to hear French, then click matching English answer
+    if (state.listenMode) {
+        // Clicking a mystery "?" card: select it, speak French, reveal it's playing
+        if (card.type === 'mystery') {
+            // Deselect if clicking the same card
+            if (state.selectedCard && state.selectedCard.id === cardId) {
+                // Re-speak the phrase
+                speakFrench(card.wordData.french);
+                return;
+            }
+            
+            // Deselect previous (but DON'T reset it — let its reveal timer keep running)
+            if (state.selectedCard) {
+                state.selectedCard.frozen = false;
+                state.selectedCard.element.classList.remove('selected', 'speaking');
+            }
+            
+            // Select and speak
+            card.frozen = true;
+            card.element.classList.add('selected', 'speaking');
+            state.selectedCard = card;
+            speakFrench(card.wordData.french);
+            
+            // Start a 5-second reveal timer for THIS card (if not already revealed)
+            if (!card.revealTimer && !card.revealed) {
+                card.revealTimer = setTimeout(() => {
+                    card.revealTimer = null;
+                    card.revealed = true;
+                    card.element.textContent = card.wordData.french;
+                    card.element.classList.add('hint-text');
+                }, 5000);
+            }
+            return;
+        }
+
+        // Clicking an answer card: check if it matches selected mystery card
+        if (card.type === 'answer') {
+            if (!state.selectedCard || state.selectedCard.type !== 'mystery') {
+                // No mystery card selected - just flash hint
+                card.element.classList.add('hint-flash');
+                setTimeout(() => card.element.classList.remove('hint-flash'), 400);
+                return;
+            }
+            
+            if (card.pairKey === state.selectedCard.pairKey) {
+                // Correct match!
+                speakFrench(card.wordData.french);
+                
+                // Clear the card's reveal timer if still pending
+                if (state.selectedCard.revealTimer) {
+                    clearTimeout(state.selectedCard.revealTimer);
+                    state.selectedCard.revealTimer = null;
+                }
+                
+                const mysteryCard = state.selectedCard;
+                
+                // Reveal the French text on the mystery card before removing
+                mysteryCard.element.classList.remove('selected', 'speaking', 'hint-text');
+                mysteryCard.element.classList.add('correct', 'revealed');
+                mysteryCard.element.textContent = mysteryCard.wordData.french;
+                card.element.classList.add('correct');
+                
+                setTimeout(() => {
+                    removeCard(mysteryCard);
+                    removeCard(card);
+                }, 800);
+                
+                state.matchedKeys.add(card.pairKey);
+                state.matchedSteps += 1;
+                updateCardCount();
+                
+                handleLearnProgress(card.wordData.french);
+                handleComboFeedback(true, card.wordData);
+                
+                state.selectedCard = null;
+                
+                // Progressive spawning: add the next pair
+                if (state.listenSpawnIndex < state.roundWords.length) {
+                    spawnMysteryCardAt(state.listenSpawnIndex);
+                    spawnAnswerCardAt(state.listenSpawnIndex);
+                    state.listenSpawnIndex++;
+                }
+                
+                checkRoundComplete();
+            } else {
+                // Wrong match - flash red and speak the correct answer
+                handleComboFeedback(false);
+                card.element.classList.add('incorrect');
+                state.selectedCard.element.classList.add('incorrect');
+                
+                // Briefly show what the mystery card actually was
+                const savedCard = state.selectedCard;
+                const wasRevealed = savedCard.revealed;
+                savedCard.element.textContent = savedCard.wordData.french;
+                savedCard.element.classList.add('revealed');
+                
+                setTimeout(() => {
+                    card.element.classList.remove('incorrect');
+                    if (savedCard && savedCard.element) {
+                        savedCard.element.classList.remove('incorrect', 'revealed');
+                        if (wasRevealed) {
+                            // Already revealed — keep showing French text
+                            savedCard.element.textContent = savedCard.wordData.french;
+                            savedCard.element.classList.add('hint-text');
+                        } else {
+                            // Not yet revealed — restore "?" and let the timer keep running
+                            savedCard.element.innerHTML = '<span class="mystery-icon">👄</span>';
+                        }
+                        // Keep it selected so player can try again
+                        savedCard.element.classList.add('selected', 'speaking');
+                    }
+                }, 1000);
+            }
+            return;
+        }
+
+        return;
+    }
+
     // Click on a quantity card starts a 2-step match: number -> noun
     if (card.type === 'quantity') {
 if (state.selectedCard && state.selectedCard.id === cardId) {
@@ -2469,7 +2907,7 @@ checkRoundComplete();
 function checkRoundComplete() {
     const totalBase = state.roundWords.length;
     const totalChallenges = state.roundChallenges ? state.roundChallenges.length : 0;
-    const totalSteps = (state.typingMode || state.colorMode || state.comboMode || state.shooterMode) ? totalBase : (totalBase + (totalChallenges * 2));
+    const totalSteps = (state.typingMode || state.colorMode || state.comboMode || state.shooterMode || state.listenMode) ? totalBase : (totalBase + (totalChallenges * 2));
 
     if (state.matchedSteps >= totalSteps) {
 if (state.spawnInterval) {
@@ -2845,7 +3283,7 @@ function handleComboFeedback(correct, wordData) {
     
     if (correct) {
         state.comboStreak++;
-        updateBreakoutScore(state.comboStreak >= 5 ? 6 : 3);
+        updateBreakoutScore(1);
         
         // Streak display
         const streakEl = document.getElementById('streak-counter');

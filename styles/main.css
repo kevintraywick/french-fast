@@ -505,6 +505,148 @@ body.dark-mode #breakout-score { text-shadow: 0 2px 6px rgba(0,0,0,0.5); }
     100% { border-color: #FF9800; background: linear-gradient(135deg, #FFF3E0 0%, #FFE0B2 100%); color: #E65100; }
 }
 
+/* Mystery "?" cards (Round 5 - Tell Me About It) */
+.mystery-card {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #6A1B9A 0%, #8E24AA 50%, #AB47BC 100%);
+    border: 3px solid #4A148C;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(106, 27, 154, 0.35);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.mystery-card:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(106, 27, 154, 0.5);
+}
+
+.mystery-icon {
+    font-size: 36px;
+    line-height: 1;
+}
+
+.mystery-card.selected {
+    border-color: #FFD600;
+    box-shadow: 0 0 20px rgba(255, 214, 0, 0.6), 0 0 40px rgba(106, 27, 154, 0.3);
+    animation: mysteryPulse 1s ease-in-out infinite;
+}
+
+.mystery-card.speaking {
+    background: linear-gradient(135deg, #7B1FA2 0%, #9C27B0 50%, #CE93D8 100%);
+}
+
+.mystery-card.correct {
+    background: linear-gradient(135deg, #C8E6C9 0%, #A5D6A7 100%);
+    border-color: #4CAF50;
+    border-radius: 20px;
+    width: auto;
+    height: auto;
+    padding: 10px 16px;
+    font-size: 15px;
+    font-weight: 600;
+    color: #2E7D32;
+}
+
+.mystery-card.revealed {
+    border-radius: 20px;
+    width: auto;
+    height: auto;
+    padding: 10px 16px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #fff;
+}
+
+.mystery-card.hint-text {
+    border-radius: 20px;
+    width: auto;
+    height: auto;
+    padding: 10px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #fff;
+    background: linear-gradient(135deg, #7B1FA2 0%, #9C27B0 50%, #CE93D8 100%);
+    animation: hintReveal 0.4s ease-out;
+}
+
+@keyframes hintReveal {
+    0% { transform: scale(1.15); opacity: 0.6; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+.mystery-card.incorrect {
+    animation: flashRedMystery 0.5s ease-out;
+}
+
+@keyframes mysteryPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.08); }
+}
+
+@keyframes flashRedMystery {
+    0% { border-color: #4A148C; }
+    30% { border-color: #ff4444; box-shadow: 0 0 20px rgba(255, 68, 68, 0.5); }
+    100% { border-color: #4A148C; }
+}
+
+/* Answer cards (English side for Tell Me About It) */
+.answer-card {
+    font-size: 13px;
+    font-weight: 600;
+    padding: 8px;
+    background: linear-gradient(135deg, #E8EAF6 0%, #C5CAE9 100%);
+    border-radius: 50%;
+    border: 3px solid #3F51B5;
+    color: #1A237E;
+    text-align: center;
+    box-shadow: 0 3px 8px rgba(63, 81, 181, 0.2);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1.2;
+    word-break: break-word;
+    overflow: hidden;
+}
+
+.answer-card:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(63, 81, 181, 0.35);
+}
+
+.answer-card.correct {
+    background: linear-gradient(135deg, #C8E6C9 0%, #A5D6A7 100%);
+    border-color: #4CAF50;
+    color: #2E7D32;
+    transform: scale(1.05);
+}
+
+.answer-card.incorrect {
+    animation: flashRedAnswer 0.5s ease-out;
+}
+
+.answer-card.hint-flash {
+    animation: hintFlash 0.4s ease-out;
+}
+
+@keyframes flashRedAnswer {
+    0% { border-color: #3F51B5; }
+    30% { border-color: #ff4444; background: #ff4444; color: white; }
+    100% { border-color: #3F51B5; background: linear-gradient(135deg, #E8EAF6 0%, #C5CAE9 100%); color: #1A237E; }
+}
+
+@keyframes hintFlash {
+    0% { border-color: #3F51B5; }
+    30% { border-color: #FFD600; box-shadow: 0 0 12px rgba(255, 214, 0, 0.5); }
+    100% { border-color: #3F51B5; }
+}
+
 /* Paddle (Round 4+ Breakout) */
 #paddle-container {
     display: none;
@@ -963,6 +1105,28 @@ body.dark-mode .phrase-card.hit {
     background: linear-gradient(135deg, #3a2a00 0%, #2a1f00 100%);
     border-color: #c89000;
     color: #ffd080;
+}
+body.dark-mode .mystery-card {
+    background: linear-gradient(135deg, #4A148C 0%, #6A1B9A 50%, #7B1FA2 100%);
+    border-color: #CE93D8;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+body.dark-mode .mystery-card.selected {
+    border-color: #FFD600;
+}
+body.dark-mode .mystery-card.hint-text {
+    background: linear-gradient(135deg, #4A148C 0%, #6A1B9A 50%, #8E24AA 100%);
+    color: #E1BEE7;
+}
+body.dark-mode .answer-card {
+    background: linear-gradient(135deg, #1A237E 0%, #283593 100%);
+    border-color: #7986CB;
+    color: #C5CAE9;
+}
+body.dark-mode .answer-card.correct {
+    background: linear-gradient(135deg, #1B5E20 0%, #2E7D32 100%);
+    border-color: #66BB6A;
+    color: #C8E6C9;
 }
 body.dark-mode #progress-bar-container {
     background: #2a2a4a;
