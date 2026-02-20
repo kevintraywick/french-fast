@@ -1177,3 +1177,108 @@ body.dark-mode .emoji-card.show-word {
 body.dark-mode .color-disc.show-word {
     color: white !important;
 }
+
+/* ============================================
+   PONG MODE (Round 6)
+   ============================================ */
+
+.pong-phrase {
+    position: absolute;
+    background: linear-gradient(135deg, #a8d0f0 0%, #6eadd4 100%);
+    border-radius: 50px;
+    padding: 16px 28px;
+    font-size: 20px;
+    font-weight: 700;
+    color: #1a3a5c;
+    text-align: center;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.2), inset 0 2px 6px rgba(255,255,255,0.5);
+    min-width: 180px;
+    max-width: 320px;
+    white-space: nowrap;
+    z-index: 20;
+    user-select: none;
+    pointer-events: none;
+    transition: background 0.2s;
+}
+.pong-phrase.correct-flash {
+    background: linear-gradient(135deg, #90EE90 0%, #4CAF50 100%);
+    color: #1a3a1a;
+    transform: scale(1.05);
+    transition: none;
+}
+.pong-phrase.wrong-flash {
+    background: linear-gradient(135deg, #ffaaaa 0%, #e53935 100%);
+    color: white;
+    transition: none;
+}
+
+.pong-reply {
+    position: absolute;
+    background: linear-gradient(135deg, #d8b4ea 0%, #a97dc8 100%);
+    border-radius: 50px;
+    padding: 10px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #3a1a5c;
+    text-align: center;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.15), inset 0 2px 4px rgba(255,255,255,0.4);
+    white-space: nowrap;
+    z-index: 20;
+    user-select: none;
+    pointer-events: none;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+}
+.pong-reply.active {
+    background: linear-gradient(135deg, #90EE90 0%, #4CAF50 100%);
+    color: #1a3a1a;
+    transform: scale(1.1);
+    box-shadow: 0 4px 16px rgba(76,175,80,0.5), inset 0 2px 4px rgba(255,255,255,0.4);
+}
+.pong-reply.loaded-dim {
+    opacity: 0.35;
+    transform: scale(0.92);
+}
+
+.pong-missile {
+    position: absolute;
+    background: linear-gradient(135deg, #90EE90 0%, #4CAF50 100%);
+    border-radius: 40px;
+    padding: 10px 18px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #1a3a1a;
+    box-shadow: 0 3px 12px rgba(76,175,80,0.6);
+    z-index: 25;
+    white-space: nowrap;
+    pointer-events: none;
+    user-select: none;
+}
+.pong-missile.wrong-flash {
+    background: linear-gradient(135deg, #ffaaaa 0%, #e53935 100%);
+    color: white;
+}
+
+#paddle-container.pong-loaded #paddle {
+    background: linear-gradient(90deg, #4CAF50, #66BB6A);
+    color: white;
+    font-weight: 700;
+}
+
+body.dark-mode .pong-phrase {
+    color: #cce4ff;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.4), inset 0 2px 6px rgba(255,255,255,0.15);
+}
+body.dark-mode .pong-reply {
+    color: #e8d4ff;
+}
+.pong-hint {
+    position: absolute;
+    bottom: 60px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 13px;
+    color: #888;
+    pointer-events: none;
+    z-index: 15;
+    white-space: nowrap;
+}

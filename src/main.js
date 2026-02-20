@@ -273,6 +273,24 @@ const CAFE_ORDERING = [
 ];
 
 // ============================================
+// PONG CONVERSATION DATA (Round 6)
+// ============================================
+const PONG_CONVERSATIONS = [
+    { prompt: "Bonjour !", validReplies: ["Bonjour !", "Salut !", "Bonsoir !"], distractors: ["Merci.", "Au revoir.", "Non merci."] },
+    { prompt: "Comment allez-vous ?", validReplies: ["Très bien, merci !", "Ça va bien.", "Pas mal, merci."], distractors: ["S'il vous plaît.", "Au revoir.", "Excusez-moi."] },
+    { prompt: "Qu'est-ce que vous désirez ?", validReplies: ["Un café, s'il vous plaît.", "Je voudrais un thé.", "Un croissant, merci."], distractors: ["Bonsoir !", "C'est combien ?", "Très bien."] },
+    { prompt: "Avec du lait ?", validReplies: ["Oui, s'il vous plaît.", "Non, merci.", "Un peu, merci."], distractors: ["Bonjour !", "C'est délicieux.", "Au revoir."] },
+    { prompt: "C'est combien ?", validReplies: ["Voilà cinq euros.", "Je peux payer par carte ?", "Gardez la monnaie."], distractors: ["Bonjour !", "Avec du lait ?", "Non merci."] },
+    { prompt: "Excusez-moi !", validReplies: ["Oui ?", "Je vous en prie.", "Bien sûr !"], distractors: ["Bonjour !", "Au revoir.", "Un thé."] },
+    { prompt: "Où sont les toilettes ?", validReplies: ["Là-bas, à droite.", "Au fond, à gauche.", "Au premier étage."], distractors: ["Bonjour !", "Merci beaucoup.", "Un café."] },
+    { prompt: "C'est délicieux !", validReplies: ["Merci beaucoup !", "Je suis content !", "C'est ma spécialité."], distractors: ["L'addition !", "Excusez-moi.", "Au revoir."] },
+    { prompt: "Vous parlez anglais ?", validReplies: ["Oui, un peu.", "Non, désolé.", "Je préfère le français !"], distractors: ["Bonjour !", "C'est combien ?", "Au revoir."] },
+    { prompt: "L'addition, s'il vous plaît.", validReplies: ["Voilà !", "Tout de suite !", "Bien sûr, monsieur."], distractors: ["Au revoir !", "Bonjour !", "Avec plaisir."] },
+    { prompt: "Bonne journée !", validReplies: ["Merci, vous aussi !", "Au revoir !", "À bientôt !"], distractors: ["Oui, s'il vous plaît.", "C'est combien ?", "Un café."] },
+    { prompt: "À bientôt !", validReplies: ["À bientôt !", "Au revoir !", "Bonne journée !"], distractors: ["Bonjour !", "Un café.", "C'est combien ?"] },
+];
+
+// ============================================
 // FRENCH ROUND NUMBERS
 // ============================================
 const FRENCH_NUMBERS = [
@@ -365,6 +383,15 @@ const state = {
     iconSpawnQueue: [],     // compat
     wordRefillQueue: [],    // compat
     
+    // Pong mode (Round 6)
+    pongMode: false,
+    pongConvIndex: 0,
+    pongPhrase: null,
+    pongReplies: [],
+    pongLoaded: null,
+    pongMissile: null,
+    pongSpeed: 0.5,
+    
     roundTheme: '',      // Current round theme name
 
     // Round tracking
@@ -451,6 +478,298 @@ const centerIconContainer = document.getElementById('center-icon-container');
 const centerIconCircle = document.getElementById('center-icon-circle');
 const croissantShooter = document.getElementById('croissant-shooter');
 const croissantShip = document.getElementById('croissant-ship');
+
+// ============================================
+// PONG MODE (Round 6)
+// ============================================
+const pongState = {
+    phraseEl: null,
+    missileEl: null,
+    hintEl: null,
+    replyEls: [],
+    replies: [],
+    phraseY: -100,
+    speed: 1.0,
+    matchCount: 0,
+    convIndex: 0,
+    loadedIdx: -1,
+    activeIdx: -1,
+    missileActive: false,
+    missileX: 0,
+    missileY: 0,
+    missileValid: false,
+};
+
+function setupPongRound() {
+    state.pongMode = true;
+    state.roundTheme = 'Conversation Pong';
+
+    pongState.phraseY = -100;
+    pongState.convIndex = 0;
+    pongState.speed = 1.0;
+    pongState.matchCount = 0;
+    pongState.loadedIdx = -1;
+    pongState.activeIdx = -1;
+    pongState.missileActive = false;
+
+    cleanupPongMode();
+
+    const phraseEl = document.createElement('div');
+    phraseEl.className = 'pong-phrase';
+    gameArea.appendChild(phraseEl);
+    pongState.phraseEl = phraseEl;
+
+    const missileEl = document.createElement('div');
+    missileEl.className = 'pong-missile';
+    missileEl.style.display = 'none';
+    gameArea.appendChild(missileEl);
+    pongState.missileEl = missileEl;
+
+    const hintEl = document.createElement('div');
+    hintEl.className = 'pong-hint';
+    hintEl.textContent = '\u2190 \u2192 move \u00b7 Space to load \u00b7 Space again to launch';
+    gameArea.appendChild(hintEl);
+    pongState.hintEl = hintEl;
+
+    state.roundWords = PONG_CONVERSATIONS.map((c, i) => ({
+        french: c.prompt,
+        english: c.validReplies[0],
+        key: 'pong_' + i,
+    }));
+    state.matchedKeys.clear();
+    state.matchedSteps = 0;
+
+    roundNumberEl.textContent = frenchRoundNumber(state.currentRound);
+    roundThemeEl.textContent = ` - ${state.roundTheme}`;
+    updateCardCount();
+
+    const paddle = document.getElementById('paddle');
+    state.paddleX = (gameArea.offsetWidth - 140) / 2;
+    paddle.style.left = state.paddleX + 'px';
+    paddle.textContent = '\u2190 Space to load';
+    state.paddleMoving = { left: false, right: false };
+    document.getElementById('paddle-container').classList.add('show');
+    document.getElementById('paddle-hint').classList.remove('show');
+
+    setTimeout(() => loadPongConversation(0), 100);
+    return true;
+}
+
+function loadPongConversation(index) {
+    if (index >= PONG_CONVERSATIONS.length) {
+        checkRoundComplete();
+        return;
+    }
+    const conv = PONG_CONVERSATIONS[index];
+    pongState.convIndex = index;
+    pongState.loadedIdx = -1;
+    pongState.activeIdx = -1;
+    pongState.missileActive = false;
+    if (pongState.missileEl) pongState.missileEl.style.display = 'none';
+
+    pongState.phraseEl.textContent = conv.prompt;
+    pongState.phraseEl.classList.remove('correct-flash', 'wrong-flash');
+    pongState.phraseY = -120;
+
+    speakFrench(conv.prompt);
+
+    const validPick = [...conv.validReplies].sort(() => Math.random() - 0.5).slice(0, 3);
+    const numDistract = 6 - validPick.length;
+    const distractPick = [...conv.distractors].sort(() => Math.random() - 0.5).slice(0, numDistract);
+    const allReplies = [
+        ...validPick.map(t => ({ text: t, valid: true })),
+        ...distractPick.map(t => ({ text: t, valid: false })),
+    ].sort(() => Math.random() - 0.5);
+
+    for (const el of pongState.replyEls) el.remove();
+    pongState.replyEls = [];
+    pongState.replies = [];
+
+    const areaWidth = gameArea.offsetWidth;
+    const areaHeight = gameArea.offsetHeight;
+    const replyY = areaHeight - 54 - 72;
+    const slotWidth = areaWidth / 6;
+
+    allReplies.forEach((reply, i) => {
+        const el = document.createElement('div');
+        el.className = 'pong-reply';
+        el.textContent = reply.text;
+        el.style.top = replyY + 'px';
+        el.style.left = '-999px';
+        gameArea.appendChild(el);
+        const slotCX = slotWidth * i + slotWidth / 2;
+        requestAnimationFrame(() => {
+            el.style.left = (slotCX - el.offsetWidth / 2) + 'px';
+        });
+        pongState.replyEls.push(el);
+        pongState.replies.push({ text: reply.text, valid: reply.valid, slotCX });
+    });
+
+    const paddle = document.getElementById('paddle');
+    paddle.textContent = '\u2190 Space to load';
+    document.getElementById('paddle-container').classList.remove('pong-loaded');
+}
+
+function updatePongMode(deltaTime) {
+    if (!state.pongMode || state.paused || !pongState.phraseEl) return;
+
+    const areaWidth = gameArea.offsetWidth;
+    const areaHeight = gameArea.offsetHeight;
+    const paddleWidth = 140;
+    const paddleHeight = 42;
+    const paddle = document.getElementById('paddle');
+
+    const pSpeed = 8 * deltaTime;
+    if (state.paddleMoving.left) state.paddleX -= pSpeed;
+    if (state.paddleMoving.right) state.paddleX += pSpeed;
+    state.paddleX = Math.max(0, Math.min(areaWidth - paddleWidth, state.paddleX));
+    paddle.style.left = state.paddleX + 'px';
+
+    const paddleCX = state.paddleX + paddleWidth / 2;
+
+    // Highlight closest reply slot
+    let closestIdx = -1;
+    let closestDist = Infinity;
+    for (let i = 0; i < pongState.replies.length; i++) {
+        const d = Math.abs(pongState.replies[i].slotCX - paddleCX);
+        if (d < closestDist) { closestDist = d; closestIdx = i; }
+    }
+    const newActive = (closestDist < 90 && pongState.loadedIdx < 0) ? closestIdx : -1;
+    if (newActive !== pongState.activeIdx) {
+        if (pongState.activeIdx >= 0 && pongState.replyEls[pongState.activeIdx]) {
+            pongState.replyEls[pongState.activeIdx].classList.remove('active');
+        }
+        if (newActive >= 0 && pongState.replyEls[newActive]) {
+            pongState.replyEls[newActive].classList.add('active');
+        }
+        pongState.activeIdx = newActive;
+    }
+
+    // Move phrase bubble down
+    pongState.phraseY += pongState.speed * deltaTime;
+    const phraseW = pongState.phraseEl.offsetWidth || 200;
+    const phraseH = pongState.phraseEl.offsetHeight || 60;
+    const phraseCX = areaWidth / 2;
+    pongState.phraseEl.style.left = (phraseCX - phraseW / 2) + 'px';
+    pongState.phraseEl.style.top = pongState.phraseY + 'px';
+
+    // Reset phrase to top when it reaches reply row
+    const replyRowTop = areaHeight - 54 - 72 - 50;
+    if (pongState.phraseY > replyRowTop) {
+        pongState.phraseY = -phraseH - 20;
+        speakFrench(PONG_CONVERSATIONS[pongState.convIndex].prompt);
+    }
+
+    // Move missile upward
+    if (pongState.missileActive && pongState.missileEl) {
+        pongState.missileY -= 10 * deltaTime;
+        pongState.missileEl.style.top = pongState.missileY + 'px';
+
+        const mW = pongState.missileEl.offsetWidth || 100;
+        const mH = pongState.missileEl.offsetHeight || 40;
+
+        const horizHit = Math.abs(pongState.missileX - phraseCX) < (phraseW / 2 + mW / 2 - 20);
+        const vertHit = pongState.missileY < pongState.phraseY + phraseH &&
+                        pongState.missileY + mH > pongState.phraseY;
+
+        if (horizHit && vertHit) {
+            pongState.missileEl.style.display = 'none';
+            pongState.missileActive = false;
+
+            if (pongState.missileValid) {
+                speakFrench(PONG_CONVERSATIONS[pongState.convIndex].prompt);
+                pongState.phraseEl.classList.add('correct-flash');
+                setTimeout(() => pongState.phraseEl.classList.remove('correct-flash'), 600);
+
+                state.matchedKeys.add('pong_' + pongState.convIndex);
+                state.matchedSteps++;
+                updateCardCount();
+
+                pongState.matchCount++;
+                pongState.speed = Math.min(1.0 + pongState.matchCount * 0.18, 4.5);
+
+                checkRoundComplete();
+                if (state.matchedSteps < state.roundWords.length) {
+                    setTimeout(() => loadPongConversation(pongState.convIndex + 1), 900);
+                }
+            } else {
+                // Wrong
+                pongState.phraseEl.classList.add('wrong-flash');
+                setTimeout(() => pongState.phraseEl.classList.remove('wrong-flash'), 600);
+                pongState.loadedIdx = -1;
+                paddle.textContent = '\u2190 Space to load';
+                document.getElementById('paddle-container').classList.remove('pong-loaded');
+            }
+        }
+
+        // Flew past top without hitting
+        if (pongState.missileY < -80) {
+            pongState.missileEl.style.display = 'none';
+            pongState.missileActive = false;
+            pongState.loadedIdx = -1;
+            paddle.textContent = '\u2190 Space to load';
+            document.getElementById('paddle-container').classList.remove('pong-loaded');
+        }
+    }
+}
+
+function pongSpaceBar() {
+    if (!state.pongMode || pongState.missileActive) return;
+    if (pongState.loadedIdx >= 0) {
+        launchPongMissile();
+    } else {
+        if (pongState.activeIdx < 0) return;
+        const reply = pongState.replies[pongState.activeIdx];
+        pongState.loadedIdx = pongState.activeIdx;
+        const paddle = document.getElementById('paddle');
+        paddle.textContent = reply.text;
+        document.getElementById('paddle-container').classList.add('pong-loaded');
+        pongState.replyEls[pongState.activeIdx].classList.remove('active');
+        pongState.replyEls[pongState.activeIdx].classList.add('loaded-dim');
+        pongState.activeIdx = -1;
+    }
+}
+
+function launchPongMissile() {
+    if (pongState.loadedIdx < 0) return;
+    const reply = pongState.replies[pongState.loadedIdx];
+    const areaHeight = gameArea.offsetHeight;
+    const paddleHeight = 42;
+    const paddleWidth = 140;
+
+    pongState.missileEl.textContent = reply.text;
+    pongState.missileEl.className = 'pong-missile';
+    pongState.missileEl.style.display = 'block';
+
+    const mW = pongState.missileEl.offsetWidth || 100;
+    pongState.missileX = state.paddleX + paddleWidth / 2;
+    pongState.missileY = areaHeight - paddleHeight - 12 - 55;
+    pongState.missileEl.style.left = (pongState.missileX - mW / 2) + 'px';
+    pongState.missileEl.style.top = pongState.missileY + 'px';
+    pongState.missileActive = true;
+    pongState.missileValid = reply.valid;
+
+    if (pongState.replyEls[pongState.loadedIdx]) {
+        pongState.replyEls[pongState.loadedIdx].classList.remove('loaded-dim');
+    }
+    pongState.loadedIdx = -1;
+
+    const paddle = document.getElementById('paddle');
+    paddle.textContent = '\u2190 Space to load';
+    document.getElementById('paddle-container').classList.remove('pong-loaded');
+}
+
+function cleanupPongMode() {
+    if (pongState.phraseEl) { pongState.phraseEl.remove(); pongState.phraseEl = null; }
+    if (pongState.missileEl) { pongState.missileEl.remove(); pongState.missileEl = null; }
+    if (pongState.hintEl) { pongState.hintEl.remove(); pongState.hintEl = null; }
+    for (const el of pongState.replyEls) if (el.parentNode) el.remove();
+    pongState.replyEls = [];
+    pongState.replies = [];
+    pongState.missileActive = false;
+    pongState.loadedIdx = -1;
+    pongState.activeIdx = -1;
+}
 
 // ============================================
 // INITIALIZATION
@@ -625,6 +944,8 @@ function setupRound() {
     }
     state.comboMode = false;
     state.shooterMode = false;
+    state.pongMode = false;
+    cleanupPongMode();
     state.missiles = [];
     state.paddleWord = null;
     state.paddleMoving = { left: false, right: false };
@@ -667,8 +988,13 @@ for (const m of state.missiles) {
     }
     state.missiles = [];
     
-    // Round 3+: Paddle Breakout (also R6+)
-    if (state.currentRound === 3 || state.currentRound >= 6) {
+    // Round 6: Pong
+    if (state.currentRound === 6) {
+        return setupPongRound();
+    }
+
+    // Round 3+: Paddle Breakout (also R7+)
+    if (state.currentRound === 3 || state.currentRound >= 7) {
 state.iconMode = false;
 state.phraseMode = false;
 state.colorMode = false;
@@ -1132,7 +1458,8 @@ function startNextRound() {
     // Show round title card with instructions
     const isCoffeeShopRound = state.currentRound === 4;
     const isListenRound = state.currentRound === 5;
-    const isShooterRound = state.currentRound === 3 || state.currentRound >= 6;
+    const isPongRound = state.currentRound === 6;
+    const isShooterRound = state.currentRound === 3 || state.currentRound >= 7;
     
     if (isListenRound) {
         // Show special instructions for listen & match round
@@ -1164,6 +1491,17 @@ function startNextRound() {
                 console.log('R5: After 1s - cards in state:', state.cards.length, 'DOM cards:', gameArea.querySelectorAll('.card').length);
                 console.log('R5: activePairs:', state.activePairs.size, 'listenSpawnIndex:', state.listenSpawnIndex);
             }, 1000);
+        }, 3000);
+    } else if (isPongRound) {
+        roundTitleOverlay.classList.add('show');
+        roundTitleText.textContent = `Round ${frenchRoundNumber(state.currentRound)} - Conversation Pong`;
+        roundTitleInstructions.innerHTML = '\u2190 \u2192 move paddle \u00b7 Space to load a reply \u00b7 Space again to launch!<br><br><span style="color:#1a5c2a;font-weight:600;">\u2705 Multiple correct replies \u00b7 Speed increases with each match!</span>';
+        setupRound();
+        setTimeout(() => {
+            roundTitleOverlay.classList.remove('show');
+            resetRoundTimer();
+            startRoundTimer();
+            // No spawning needed - pong handles its own loop
         }, 3000);
     } else if (isCoffeeShopRound) {
         // Show special instructions for coffee shop round
@@ -1254,7 +1592,8 @@ function skipRound() {
     // Show round title card with instructions
     const isCoffeeShopRound2 = state.currentRound === 4;
     const isListenRound2 = state.currentRound === 5;
-    const isShooterRound2 = state.currentRound === 3 || state.currentRound >= 6;
+    const isPongRound2 = state.currentRound === 6;
+    const isShooterRound2 = state.currentRound === 3 || state.currentRound >= 7;
     
     if (isListenRound2) {
         console.log('R5 (skip): Showing title overlay');
@@ -1280,6 +1619,16 @@ function skipRound() {
             setTimeout(() => {
                 console.log('R5 (skip): After 1s - cards in state:', state.cards.length, 'DOM cards:', gameArea.querySelectorAll('.card').length);
             }, 1000);
+        }, 3000);
+    } else if (isPongRound2) {
+        roundTitleOverlay.classList.add('show');
+        roundTitleText.textContent = `Round ${frenchRoundNumber(state.currentRound)} - Conversation Pong`;
+        roundTitleInstructions.innerHTML = '\u2190 \u2192 move paddle \u00b7 Space to load a reply \u00b7 Space again to launch!<br><br><span style="color:#1a5c2a;font-weight:600;">\u2705 Multiple correct replies \u00b7 Speed increases with each match!</span>';
+        setupRound();
+        setTimeout(() => {
+            roundTitleOverlay.classList.remove('show');
+            resetRoundTimer();
+            startRoundTimer();
         }, 3000);
     } else if (isCoffeeShopRound2) {
         // Show special instructions for coffee shop round
@@ -2366,8 +2715,10 @@ function update(currentTime) {
     if (!state.paused) {
         updateCards(deltaTime);
         
-        // Update paddle mode
-        if (state.shooterMode) {
+        // Update paddle/pong mode
+        if (state.pongMode) {
+            updatePongMode(deltaTime);
+        } else if (state.shooterMode) {
             updatePaddleMode(deltaTime);
         }
     }
@@ -3006,6 +3357,23 @@ function removeCard(card) {
 // KEYBOARD
 // ============================================
 function handleKeydown(e) {
+    // Pong mode controls
+    if (state.pongMode && !state.paused) {
+        if (e.key === 'ArrowLeft') {
+            e.preventDefault();
+            state.paddleMoving.left = true;
+            return;
+        } else if (e.key === 'ArrowRight') {
+            e.preventDefault();
+            state.paddleMoving.right = true;
+            return;
+        } else if (e.key === ' ') {
+            e.preventDefault();
+            pongSpaceBar();
+            return;
+        }
+    }
+
     // Paddle mode controls
     if (state.shooterMode && !state.paused) {
         if (e.key === 'ArrowLeft') {
@@ -3046,7 +3414,7 @@ function handleKeydown(e) {
 }
 
 function handleKeyup(e) {
-    if (state.shooterMode) {
+    if (state.shooterMode || state.pongMode) {
         if (e.key === 'ArrowLeft') state.paddleMoving.left = false;
         if (e.key === 'ArrowRight') state.paddleMoving.right = false;
     }
