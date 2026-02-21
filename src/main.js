@@ -138,7 +138,7 @@ const VOCABULARY = [
     { emoji: "🏨", french: "hôtel", english: "hotel" },
     { emoji: "⛪", french: "église", english: "church" },
     { emoji: "🏰", french: "château", english: "castle" },
-    { emoji: "🌉", french: "pont", english: "bridge" },
+    { emoji: "🌁", french: "pont", english: "bridge" },
     { emoji: "🏖️", french: "plage", english: "beach" },
     { emoji: "0️⃣", french: "zéro", english: "zero", tags: ["number"], numeral: 0 },
     { emoji: "1️⃣", french: "un", english: "one", tags: ["number"], numeral: 1 },
@@ -777,6 +777,23 @@ function cleanupPongMode() {
 function init() {
     loadProgress();
     updateProgressDisplay();
+
+    // Splash page — wait for user to click play
+    const splashEl = document.getElementById('splash-overlay');
+    if (splashEl) {
+        splashEl.addEventListener('click', () => {
+            splashEl.classList.add('hidden');
+            setTimeout(() => splashEl.remove(), 500);
+            startGame();
+        }, { once: true });
+        return; // Don't start game yet
+    }
+    startGame();
+}
+
+function startGame() {
+    loadProgress();
+    updateProgressDisplay();
     
     // Show audio setup overlay and flash the controls
     audioSetupOverlay.classList.add('show');
@@ -1017,7 +1034,7 @@ let paddleWords = emojiPool.filter(w => {
     return true;
 });
 if (paddleWords.length < 20) paddleWords = [...emojiPool];
-paddleWords = paddleWords.sort(() => Math.random() - 0.5).slice(0, 50);
+paddleWords = paddleWords.sort(() => Math.random() - 0.5).slice(0, 40);
 
 state.roundWords = paddleWords.map(w => ({
     ...w,
@@ -2077,6 +2094,12 @@ return true;
 // ============================================
 // CARD SPAWNING
 // ============================================
+const EMOJI_CARD_PASTELS = [
+    '#fff8e1','#fce4ec','#e8f5e9','#e3f2fd','#f3e5f5',
+    '#e0f7fa','#fff3e0','#f1f8e9','#fdf6e3','#e8eaf6',
+    '#fbe9e7','#e0f2f1','#ede7f6','#e1f5fe','#f9fbe7',
+];
+
 function spawnEmojiCardAt(index) {
     const wordData = state.roundWords[index];
     if (!wordData) {
@@ -2115,6 +2138,8 @@ element: null
     el.dataset.id = id;
     el.dataset.pairKey = key;
     el.textContent = wordData.emoji;
+    // Pastel background so dark emojis (like vélo) are always visible
+    el.style.background = EMOJI_CARD_PASTELS[index % EMOJI_CARD_PASTELS.length];
     el.style.left = pos.x + 'px';
     el.style.top = pos.y + 'px';
     gameArea.appendChild(el);
@@ -3505,10 +3530,12 @@ function updatePaddleMode(deltaTime) {
         const boosted = em.boostUntil > now;
         const boostMul = boosted ? 1.5 : 1.0;
         
-        // Wall bounces — gain 10% speed each bounce
-        if (em.x <= 0) { em.x = 0; em.vx = Math.abs(em.vx) * 1.0; }
-        if (em.x + s >= areaWidth) { em.x = areaWidth - s; em.vx = -Math.abs(em.vx) * 1.0; }
-        if (em.y <= 0) { em.y = 0; em.vy = Math.abs(em.vy) * 1.0; }
+        // Wall bounces — gain 10% speed when < 10 emojis alive
+        const aliveCount = state.bounceEmojis.filter(e => e.alive).length;
+        const wallBoost = aliveCount < 10 ? 1.1 : 1.0;
+        if (em.x <= 0) { em.x = 0; em.vx = Math.abs(em.vx) * wallBoost; }
+        if (em.x + s >= areaWidth) { em.x = areaWidth - s; em.vx = -Math.abs(em.vx) * wallBoost; }
+        if (em.y <= 0) { em.y = 0; em.vy = Math.abs(em.vy) * wallBoost; }
         
         // Bottom wrap — exit bottom, reappear at top
         if (em.y > areaHeight + s) {
@@ -3563,6 +3590,7 @@ function updatePaddleMode(deltaTime) {
                 setTimeout(() => paddle.classList.remove('catching'), 400);
                 
                 handleComboFeedback(true, em.wordData);
+                updateBreakoutScore(1); // +2 total (handleComboFeedback already adds 1)
                 
                 state.matchedKeys.add(normalizeFrench(em.wordData.french));
                 state.clearedEmojis++;
