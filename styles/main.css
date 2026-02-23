@@ -54,16 +54,22 @@ body {
 .top-bar-left > *:first-child { padding-left: 0; }
 .top-bar-left > *:last-child { border-right: none; padding-right: 0; }
 
-/* ── Base button style ── */
-#top-bar button {
-    padding: 6px 12px;
+/* ── Base button + select height match ── */
+#top-bar button,
+#voice-select {
+    height: 29px;
+    box-sizing: border-box;
     font-size: 13px;
+    line-height: 1;
+}
+
+#top-bar button {
+    padding: 0 12px;
     background: #f2f2f2;
     border: 1px solid #ddd;
     border-radius: 6px;
     cursor: pointer;
     white-space: nowrap;
-    line-height: 1;
     transition: background 0.15s ease;
 }
 #top-bar button:hover { background: #e6e6e6; }
@@ -72,17 +78,18 @@ body {
 #round-display {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 8px;
     white-space: nowrap;
 }
 
 #round-label {
     display: inline-block;
-    min-width: 210px;
+    min-width: 200px;
     text-align: center;
     font-size: 15px;
     font-weight: 600;
     color: #222;
+    padding: 0 4px;
 }
 
 #round-theme {
@@ -90,10 +97,17 @@ body {
     color: #1976d2;
 }
 
+/* Vertical bar separator before theme name when present */
+#round-theme:not(:empty)::before {
+    content: ' | ';
+    font-weight: 300;
+    color: #ccc;
+}
+
 /* Nav buttons narrower since icon-only */
 #prev-round-btn,
 #skip-round-btn {
-    padding: 5px 8px;
+    padding: 0 9px;
 }
 
 /* ── Timer ── */
@@ -129,9 +143,7 @@ body {
 }
 
 #voice-select {
-    padding: 6px 8px;
-    font-size: 13px;
-    line-height: 1;
+    padding: 0 8px;
     border: 1px solid #ddd;
     border-radius: 6px;
     background: #f2f2f2;

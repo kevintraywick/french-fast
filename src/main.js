@@ -579,7 +579,7 @@ function setupPongRound() {
     state.matchedSteps = 0;
 
     roundNumberEl.textContent = frenchRoundNumber(state.currentRound);
-    roundThemeEl.textContent = ` - ${state.roundTheme}`;
+    roundThemeEl.textContent = state.roundTheme;
     updateCardCount();
 
     const paddle = document.getElementById('paddle');
@@ -1209,7 +1209,7 @@ state.activePairs.clear();
 state.multiStep = null;
 
 roundNumberEl.textContent = frenchRoundNumber(state.currentRound);
-roundThemeEl.textContent = ` - ${state.roundTheme}`;
+roundThemeEl.textContent = state.roundTheme;
 updateCardCount();
 
 // Show paddle
@@ -1271,7 +1271,7 @@ state.activePairs.clear();
 state.multiStep = null;
 
 roundNumberEl.textContent = frenchRoundNumber(state.currentRound);
-roundThemeEl.textContent = ` - ${state.roundTheme}`;
+roundThemeEl.textContent = state.roundTheme;
 updateCardCount();
 
 return state.roundWords.length > 0;
@@ -1351,7 +1351,7 @@ return state.roundWords.length > 0;
         state.multiStep = null;
 
         roundNumberEl.textContent = frenchRoundNumber(state.currentRound);
-        roundThemeEl.textContent = ` - ${state.roundTheme}`;
+        roundThemeEl.textContent = state.roundTheme;
         updateCardCount();
 
         console.log('=== ROUND 5 SETUP COMPLETE ===', state.roundWords.length, 'words');
@@ -1415,7 +1415,7 @@ key: normalizeFrench(w.french)
     if (state.currentRound === 1) state.roundTheme = 'Les Mots';
     else if (state.currentRound === 2) state.roundTheme = 'La Mémoire';
     roundNumberEl.textContent = frenchRoundNumber(state.currentRound);
-    roundThemeEl.textContent = state.roundTheme ? ` - ${state.roundTheme}` : '';
+    roundThemeEl.textContent = state.roundTheme || '';
     updateCardCount();
 
     
