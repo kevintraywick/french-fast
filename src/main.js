@@ -325,8 +325,7 @@ const FRENCH_NUMBERS = [
 ];
 
 function frenchRoundNumber(n) {
-    if (n <= 3) return String(n);
-    if (n >= 4 && n <= 20) return FRENCH_NUMBERS[n];
+    if (n >= 1 && n <= 20) return FRENCH_NUMBERS[n];
     return String(n);
 }
 
@@ -346,7 +345,7 @@ const state = {
     cards: [],
     selectedCard: null,
     paused: false,
-    velocityMultiplier: 0.2,
+    velocityMultiplier: 1.0,
 
     // Player identification
     playerId: null,
@@ -391,6 +390,7 @@ const state = {
     
     // Paddle system
     paddleX: 0,
+    paddleVx: 0,
     paddleWord: null,
     paddleMoving: { left: false, right: false },
     bounceEmojis: [],
@@ -429,7 +429,10 @@ const state = {
 
     // Spaced repetition progress, keyed by normalized french
     // Structure: { [key]: { timesCorrect, lastSeen, learned } }
-    wordProgress: {}
+    wordProgress: {},
+
+    // Wrong match counts per pair key (reset each round)
+    wrongCounts: {}
 };
 
 // ============================================
@@ -511,6 +514,7 @@ const pongState = {
     missileEl: null,
     hintEl: null,
     subtitleEl: null,
+    phraseX: 0,
     replyEls: [],
     replies: [],
     phraseY: -100,
@@ -571,25 +575,27 @@ function setupPongRound() {
         key: 'pong_' + i,
     }));
     state.matchedKeys.clear();
+    state.wrongCounts = {};
     state.matchedSteps = 0;
 
     roundNumberEl.textContent = frenchRoundNumber(state.currentRound);
-    roundThemeEl.textContent = ` - ${state.roundTheme}`;
+    roundThemeEl.textContent = state.roundTheme;
     updateCardCount();
 
     const paddle = document.getElementById('paddle');
     state.paddleX = (gameArea.offsetWidth - 140) / 2;
+    state.paddleVx = 0;
     paddle.style.left = state.paddleX + 'px';
     paddle.textContent = 'Space to load';
     state.paddleMoving = { left: false, right: false };
     document.getElementById('paddle-container').classList.add('show');
     document.getElementById('paddle-hint').classList.remove('show');
 
-    setTimeout(() => loadPongConversation(0), 100);
+    setTimeout(() => loadPongConversation(0, false), 100);
     return true;
 }
 
-function loadPongConversation(index) {
+function loadPongConversation(index, speak = true) {
     if (index >= PONG_CONVERSATIONS.length) {
         checkRoundComplete();
         return;
@@ -608,7 +614,7 @@ function loadPongConversation(index) {
     pongState.recapping = false;
     if (pongState.subtitleEl) { pongState.subtitleEl.remove(); pongState.subtitleEl = null; }
 
-    speakFrench(conv.prompt);
+    if (speak) speakFrench(conv.prompt);
 
     const validPick = [...conv.validReplies].sort(() => Math.random() - 0.5).slice(0, 3);
     const numDistract = 6 - validPick.length;
@@ -658,10 +664,16 @@ function updatePongMode(deltaTime) {
     const paddleHeight = 42;
     const paddle = document.getElementById('paddle');
 
-    const pSpeed = 8 * deltaTime;
-    if (state.paddleMoving.left) state.paddleX -= pSpeed;
-    if (state.paddleMoving.right) state.paddleX += pSpeed;
+    const maxPSpeed = 11.52;
+    const targetPVx = state.paddleMoving.left ? -maxPSpeed : state.paddleMoving.right ? maxPSpeed : 0;
+    if (targetPVx !== 0) {
+        state.paddleVx += (targetPVx - state.paddleVx) * 0.3 * deltaTime;
+    } else {
+        state.paddleVx *= Math.pow(0.78, deltaTime);
+    }
+    state.paddleX += state.paddleVx * deltaTime;
     state.paddleX = Math.max(0, Math.min(areaWidth - paddleWidth, state.paddleX));
+    if (state.paddleX <= 0 || state.paddleX >= areaWidth - paddleWidth) state.paddleVx = 0;
     paddle.style.left = state.paddleX + 'px';
 
     const paddleCX = state.paddleX + paddleWidth / 2;
@@ -718,7 +730,7 @@ function updatePongMode(deltaTime) {
 
     // Move missile upward
     if (pongState.missileActive && pongState.missileEl) {
-        pongState.missileY -= 10 * deltaTime;
+        pongState.missileY -= 14 * deltaTime;
         pongState.missileEl.style.top = pongState.missileY + 'px';
 
         const mW = pongState.missileEl.offsetWidth || 100;
@@ -731,6 +743,7 @@ function updatePongMode(deltaTime) {
         if (horizHit && vertHit) {
             pongState.missileEl.style.display = 'none';
             pongState.missileActive = false;
+            spawnPongExplosion(pongState.missileX, pongState.phraseY + phraseH / 2);
 
             if (pongState.missileValid) {
                 speakFrench(pongState.launchedText);
@@ -758,7 +771,7 @@ function updatePongMode(deltaTime) {
 
                 checkRoundComplete();
                 if (state.matchedSteps < state.roundWords.length) {
-                    setTimeout(() => loadPongConversation(pongState.convIndex + 1), 1500);
+                    setTimeout(() => loadPongConversation(pongState.convIndex + 1), 2500);
                 }
             } else {
                 // Wrong
@@ -827,6 +840,24 @@ function launchPongMissile() {
     const paddle = document.getElementById('paddle');
     paddle.textContent = 'Space to load';
     document.getElementById('paddle-container').classList.remove('pong-loaded');
+}
+
+function spawnPongExplosion(cx, cy) {
+    const count = 12;
+    for (let i = 0; i < count; i++) {
+        const angle = (i / count) * Math.PI * 2;
+        const dist = 40 + Math.random() * 40;
+        const dx = Math.cos(angle) * dist;
+        const dy = Math.sin(angle) * dist;
+        const p = document.createElement('div');
+        p.className = 'pong-particle';
+        p.style.left = cx + 'px';
+        p.style.top = cy + 'px';
+        p.style.setProperty('--dx', dx + 'px');
+        p.style.setProperty('--dy', dy + 'px');
+        gameArea.appendChild(p);
+        setTimeout(() => { if (p.parentNode) p.remove(); }, 600);
+    }
 }
 
 function cleanupPongMode() {
@@ -907,6 +938,7 @@ function startGame() {
                 }));
                 state.roundChallenges = [];
                 state.matchedKeys.clear();
+    state.wrongCounts = {};
                 state.matchedSteps = 0;
                 state.activePairs.clear();
                 roundNumberEl.textContent = frenchRoundNumber(state.currentRound || 1);
@@ -936,7 +968,8 @@ function startGame() {
     
     // Event listeners
     pauseBtn.addEventListener('click', togglePause);
-    skipRoundBtn.addEventListener('click', skipRound);
+    skipRoundBtn.addEventListener('click', () => skipRound(1));
+    document.getElementById('prev-round-btn').addEventListener('click', () => skipRound(-1));
     pauseOverlay.addEventListener('click', togglePause);
     
     document.addEventListener('keydown', handleKeydown);
@@ -968,8 +1001,15 @@ handleCardClick(id);
 });
 // Voice controls
     primeVoices();
+    updateAudioBtn();
     if (voiceTestBtn) {
         voiceTestBtn.addEventListener('click', () => {
+            if (audioUnlocked) {
+                audioUnlocked = false;
+                saveVoiceSettings();
+                updateAudioBtn();
+                return;
+            }
             audioUnlocked = true;
             primeVoices();
             try {
@@ -984,6 +1024,8 @@ handleCardClick(id);
                     window.speechSynthesis.speak(u);
                 }
             } catch (e) {}
+            saveVoiceSettings();
+            updateAudioBtn();
         });
     }
 
@@ -1043,6 +1085,7 @@ function setupRound() {
     state.comboMode = false;
     state.shooterMode = false;
     state.pongMode = false;
+    state.velocityMultiplier = 1.0;
     cleanupPongMode();
     state.missiles = [];
     state.paddleWord = null;
@@ -1154,6 +1197,7 @@ state.paddleWord = state.roundWords[0];
 const paddle = document.getElementById('paddle');
 paddle.textContent = state.paddleWord.french;
 state.paddleX = (gameArea.offsetWidth - 140) / 2;
+    state.paddleVx = 0;
 paddle.style.left = state.paddleX + 'px';
 
 console.log(`Round ${state.currentRound} - Breakout: ${state.roundWords.length} emojis`);
@@ -1165,7 +1209,7 @@ state.activePairs.clear();
 state.multiStep = null;
 
 roundNumberEl.textContent = frenchRoundNumber(state.currentRound);
-roundThemeEl.textContent = ` - ${state.roundTheme}`;
+roundThemeEl.textContent = state.roundTheme;
 updateCardCount();
 
 // Show paddle
@@ -1227,7 +1271,7 @@ state.activePairs.clear();
 state.multiStep = null;
 
 roundNumberEl.textContent = frenchRoundNumber(state.currentRound);
-roundThemeEl.textContent = ` - ${state.roundTheme}`;
+roundThemeEl.textContent = state.roundTheme;
 updateCardCount();
 
 return state.roundWords.length > 0;
@@ -1301,12 +1345,13 @@ return state.roundWords.length > 0;
 
         state.roundChallenges = [];
         state.matchedKeys.clear();
+    state.wrongCounts = {};
         state.matchedSteps = 0;
         state.activePairs.clear();
         state.multiStep = null;
 
         roundNumberEl.textContent = frenchRoundNumber(state.currentRound);
-        roundThemeEl.textContent = ` - ${state.roundTheme}`;
+        roundThemeEl.textContent = state.roundTheme;
         updateCardCount();
 
         console.log('=== ROUND 5 SETUP COMPLETE ===', state.roundWords.length, 'words');
@@ -1360,14 +1405,17 @@ key: normalizeFrench(w.french)
     }));
 
     state.matchedKeys.clear();
+    state.wrongCounts = {};
     state.matchedSteps = 0;
     state.spawnedEmojiIndices = [];
     state.spawnedWordIndices = [];
     state.activePairs.clear();
     state.multiStep = null;
 
+    if (state.currentRound === 1) state.roundTheme = 'Les Mots';
+    else if (state.currentRound === 2) state.roundTheme = 'La Mémoire';
     roundNumberEl.textContent = frenchRoundNumber(state.currentRound);
-    roundThemeEl.textContent = '';
+    roundThemeEl.textContent = state.roundTheme || '';
     updateCardCount();
 
     
@@ -1519,6 +1567,16 @@ function getSpawnPosition() {
             break;
     }
     
+    // Non-breakout rounds: round-scaled launch speed with wider tile-to-tile variance
+    if (!(state.currentRound === 3 || state.currentRound >= 7)) {
+        const baseMag = Math.hypot(vx, vy) || 1;
+        const displayRound = state.currentRound === 4 ? 3 : state.currentRound === 5 ? 4 : Math.max(1, state.currentRound || 1);
+        const roundBoost = Math.min(0.42, (displayRound - 1) * 0.14);
+        const targetSpeed = 0.82 + roundBoost + Math.random() * 1.92;
+        vx = (vx / baseMag) * targetSpeed;
+        vy = (vy / baseMag) * targetSpeed;
+    }
+
     return { x, y, vx, vy };
 }
 
@@ -1640,7 +1698,7 @@ function startNextRound() {
     }
 }
 
-function skipRound() {
+function skipRound(direction = 1) {
     // Stop current round activity
     if (state.spawnInterval) {
         clearInterval(state.spawnInterval);
@@ -1671,8 +1729,9 @@ function skipRound() {
     document.getElementById('paddle-hint').classList.remove('show');
     document.getElementById('top-score').style.display = 'none';
     
-    // Increment round and start the next one
-    state.currentRound++;
+    // Move to the target round
+    state.currentRound = Math.max(1, state.currentRound + direction);
+    const skipImmediate = state.paused;
     
     // Show round title card with instructions
     const isCoffeeShopRound2 = state.currentRound === 4;
@@ -1704,7 +1763,7 @@ function skipRound() {
             setTimeout(() => {
                 console.log('R5 (skip): After 1s - cards in state:', state.cards.length, 'DOM cards:', gameArea.querySelectorAll('.card').length);
             }, 1000);
-        });
+        }, skipImmediate);
     } else if (isPongRound2) {
         roundTitleOverlay.classList.add('show');
         roundTitleText.textContent = `Round ${frenchRoundNumber(state.currentRound)} - Conversation Pong`;
@@ -1714,36 +1773,36 @@ function skipRound() {
             roundTitleOverlay.classList.remove('show');
             resetRoundTimer();
             startRoundTimer();
-        });
+        }, skipImmediate);
     } else if (isCoffeeShopRound2) {
         // Show special instructions for coffee shop round
         roundTitleOverlay.classList.add('show');
         roundTitleText.textContent = `Round ${frenchRoundNumber(state.currentRound)} - Au Café`;
         roundTitleInstructions.textContent = 'Match café items to their French names!';
-        
+
         // Setup round while showing title
         setupRound();
-        
+
         // After 3 seconds, start the round
         runCountdown(() => {
             roundTitleOverlay.classList.remove('show');
             resetRoundTimer();
             startRoundTimer();
             startSpawning();
-        });
+        }, skipImmediate);
     } else if (isShooterRound2) {
         // Show special instructions for shooter mode
         roundTitleOverlay.classList.add('show');
         roundTitleText.textContent = `Round ${frenchRoundNumber(state.currentRound)} - Breakout!`;
         roundTitleInstructions.innerHTML = '← → move paddle · Catch the matching emojis!<br><br><span style="color:#d32f2f;font-weight:600;">⚠️ Caution: Hitting the wrong word increases the speed of the emoji!</span>';
-        
+
         setupRound();
         runCountdown(() => {
             roundTitleOverlay.classList.remove('show');
             resetRoundTimer();
             startRoundTimer();
             startSpawning();
-        });
+        }, skipImmediate);
     } else {
         validationOverlay.classList.add('show');
         validationText.textContent = 'Match the Pairs';
@@ -1755,7 +1814,7 @@ function skipRound() {
             resetRoundTimer();
             startRoundTimer();
             startSpawning();
-        });
+        }, skipImmediate);
     }
 }
 
@@ -1932,6 +1991,19 @@ function updateVoiceStatus(msg, ok=false) {
     if (!voiceStatusEl) return;
     voiceStatusEl.textContent = msg || '';
     voiceStatusEl.style.color = ok ? '#2E7D32' : '#999';
+}
+
+function updateAudioBtn() {
+    if (!voiceTestBtn) return;
+    if (audioUnlocked) {
+        voiceTestBtn.textContent = '🔊 Audio';
+        voiceTestBtn.classList.add('audio-on');
+        voiceTestBtn.classList.remove('audio-off');
+    } else {
+        voiceTestBtn.textContent = '🔇 Audio';
+        voiceTestBtn.classList.remove('audio-on');
+        voiceTestBtn.classList.add('audio-off');
+    }
 }
 
 // Prime voices. On Safari/macOS, premium voices often appear only after a user-gesture speak.
@@ -2820,23 +2892,33 @@ function update(currentTime) {
 function updateCards(deltaTime) {
     const areaWidth = gameArea.offsetWidth - 60;
     const areaHeight = gameArea.offsetHeight;
-    const minDistance = 75;
     const centerX = areaWidth / 2;
     const centerY = areaHeight / 2;
+    const isBreakoutRound = state.shooterMode;
     
     for (const card of state.cards) {
         // Skip frozen cards (selected)
         if (card.frozen) continue;
+
+        // Keep physics bounds aligned with rendered size (important for R5 reveal/shape changes).
+        if (!isBreakoutRound && card.element) {
+            const liveW = card.element.offsetWidth;
+            const liveH = card.element.offsetHeight;
+            if (liveW > 0 && liveH > 0 && (liveW !== card.width || liveH !== card.height)) {
+                card.width = liveW;
+                card.height = liveH;
+            }
+        }
         
         // Apply velocity
         card.x += card.vx * deltaTime * state.velocityMultiplier;
         card.y += card.vy * deltaTime * state.velocityMultiplier;
         
-        // Gravity (reduced)
-        card.vy += 0.008 * deltaTime * state.velocityMultiplier;
-        
-        // In shooter mode, push cards away from center where croissant is
-        if (state.shooterMode) {
+        if (isBreakoutRound) {
+            // Gravity (reduced)
+            card.vy += 0.008 * deltaTime * state.velocityMultiplier;
+
+            // In breakout mode, push cards away from center where croissant is
             const cardCenterX = card.x + card.width / 2;
             const cardCenterY = card.y + card.height / 2;
             const dx = cardCenterX - centerX;
@@ -2849,83 +2931,169 @@ function updateCards(deltaTime) {
                 card.vx += (dx / distToCenter) * pushStrength;
                 card.vy += (dy / distToCenter) * pushStrength;
             }
-        }
-        
-        // Gentle push away from edges/corners
-        const edgeMargin = 80;
-        if (card.x < edgeMargin) {
-            card.vx += 0.02 * (edgeMargin - card.x) / edgeMargin;
-        }
-        if (card.x + card.width > areaWidth - edgeMargin) {
-            card.vx -= 0.02 * (card.x + card.width - (areaWidth - edgeMargin)) / edgeMargin;
-        }
-        if (card.y > areaHeight - edgeMargin - card.height) {
-            card.vy -= 0.01;
-        }
-        
-        // Air resistance (more dampening)
-        card.vx *= 0.99;
-        card.vy *= 0.995;
-        
-        // Bounce off walls (reduced)
-        if (card.x < 10) {
-            card.x = 10;
-            card.vx = Math.abs(card.vx) * 0.4 + 0.1;
-        }
-        if (card.x + card.width > areaWidth) {
-            card.x = areaWidth - card.width;
-            card.vx = -Math.abs(card.vx) * 0.4 - 0.1;
-        }
-        
-        // Bounce off bottom (reduced)
-        if (card.y + card.height > areaHeight - 10) {
-            card.y = areaHeight - card.height - 10;
-            card.vy = -Math.abs(card.vy) * 0.3 - 0.05;
-            card.vx += (Math.random() - 0.5) * 0.2;
-        }
-        
-        // Bounce off top (keep cards in play)
-        if (card.y < 10) {
-            card.y = 10;
-            card.vy = Math.abs(card.vy) * 0.2;
+            // Gentle push away from edges/corners
+            const edgeMargin = 80;
+            if (card.x < edgeMargin) {
+                card.vx += 0.02 * (edgeMargin - card.x) / edgeMargin;
+            }
+            if (card.x + card.width > areaWidth - edgeMargin) {
+                card.vx -= 0.02 * (card.x + card.width - (areaWidth - edgeMargin)) / edgeMargin;
+            }
+            if (card.y > areaHeight - edgeMargin - card.height) {
+                card.vy -= 0.01;
+            }
+
+            // Air resistance (more dampening)
+            card.vx *= 0.99;
+            card.vy *= 0.995;
+
+            // Bounce off walls (reduced)
+            if (card.x < 10) {
+                card.x = 10;
+                card.vx = Math.abs(card.vx) * 0.4 + 0.1;
+            }
+            if (card.x + card.width > areaWidth) {
+                card.x = areaWidth - card.width;
+                card.vx = -Math.abs(card.vx) * 0.4 - 0.1;
+            }
+
+            // Bounce off bottom (reduced)
+            if (card.y + card.height > areaHeight - 10) {
+                card.y = areaHeight - card.height - 10;
+                card.vy = -Math.abs(card.vy) * 0.3 - 0.05;
+                card.vx += (Math.random() - 0.5) * 0.2;
+            }
+
+            // Bounce off top (keep cards in play)
+            if (card.y < 10) {
+                card.y = 10;
+                card.vy = Math.abs(card.vy) * 0.2;
+            }
+        } else {
+            // Free-bounce card physics for rounds 1/2/4/5: no gravity, preserve motion
+            card.vx *= 0.998;
+            card.vy *= 0.998;
+
+            if (card.speedVariance == null) {
+                card.speedVariance = 0.88 + Math.random() * 0.48;
+            }
+            const speed = Math.hypot(card.vx, card.vy);
+            const minSpeed = 0.7 * card.speedVariance;
+            const maxSpeed = 2.55 * card.speedVariance;
+            if (speed < minSpeed) {
+                if (speed < 0.0001) {
+                    const angle = Math.random() * Math.PI * 2;
+                    card.vx = Math.cos(angle) * minSpeed;
+                    card.vy = Math.sin(angle) * minSpeed;
+                } else {
+                    card.vx = (card.vx / speed) * minSpeed;
+                    card.vy = (card.vy / speed) * minSpeed;
+                }
+            } else if (speed > maxSpeed) {
+                card.vx = (card.vx / speed) * maxSpeed;
+                card.vy = (card.vy / speed) * maxSpeed;
+            }
+
+            if (card.x < 10) {
+                card.x = 10;
+                card.vx = Math.abs(card.vx);
+            }
+            if (card.x + card.width > areaWidth) {
+                card.x = areaWidth - card.width;
+                card.vx = -Math.abs(card.vx);
+            }
+            if (card.y < 10) {
+                card.y = 10;
+                card.vy = Math.abs(card.vy);
+            }
+            if (card.y + card.height > areaHeight - 10) {
+                card.y = areaHeight - card.height - 10;
+                card.vy = -Math.abs(card.vy);
+            }
         }
     }
     
-    // Card-card collisions (skip frozen cards) - with stronger separation
+    // Card-card collisions
     for (let i = 0; i < state.cards.length; i++) {
         for (let j = i + 1; j < state.cards.length; j++) {
             const a = state.cards[i];
             const b = state.cards[j];
-            
-            const dx = (b.x + b.width/2) - (a.x + a.width/2);
-            const dy = (b.y + b.height/2) - (a.y + a.height/2);
-            const dist = Math.hypot(dx, dy);
-            
-            if (dist < minDistance && dist > 0) {
-                const overlap = minDistance - dist;
-                const nx = dx / dist;
-                const ny = dy / dist;
-                
-                // Push apart (stronger)
-                const pushStrength = 0.4;
+            if (a.frozen && b.frozen) continue;
+
+            const invMassA = a.frozen ? 0 : 1;
+            const invMassB = b.frozen ? 0 : 1;
+            const invMassSum = invMassA + invMassB;
+            if (invMassSum === 0) continue;
+
+            let nx = 0;
+            let ny = 0;
+
+            if (!isBreakoutRound) {
+                const overlapX = Math.min(a.x + a.width, b.x + b.width) - Math.max(a.x, b.x);
+                const overlapY = Math.min(a.y + a.height, b.y + b.height) - Math.max(a.y, b.y);
+                if (overlapX <= 0 || overlapY <= 0) continue;
+
+                if (overlapX < overlapY) {
+                    // Match L3-style impulse convention: normal points from A -> B.
+                    nx = (a.x + a.width / 2) < (b.x + b.width / 2) ? 1 : -1;
+                    ny = 0;
+                    const correction = (Math.max(overlapX - 0.05, 0) / invMassSum) * 0.9;
+                    if (!a.frozen) a.x -= nx * correction * invMassA;
+                    if (!b.frozen) b.x += nx * correction * invMassB;
+                } else {
+                    nx = 0;
+                    ny = (a.y + a.height / 2) < (b.y + b.height / 2) ? 1 : -1;
+                    const correction = (Math.max(overlapY - 0.05, 0) / invMassSum) * 0.9;
+                    if (!a.frozen) a.y -= ny * correction * invMassA;
+                    if (!b.frozen) b.y += ny * correction * invMassB;
+                }
+            } else {
+                const dx = (b.x + b.width/2) - (a.x + a.width/2);
+                const dy = (b.y + b.height/2) - (a.y + a.height/2);
+                const radiusA = Math.max(24, Math.min(a.width, a.height) * 0.48);
+                const radiusB = Math.max(24, Math.min(b.width, b.height) * 0.48);
+                const pairMinDistance = radiusA + radiusB;
+                const distSq = dx * dx + dy * dy;
+                if (distSq >= pairMinDistance * pairMinDistance) continue;
+
+                const dist = Math.sqrt(Math.max(distSq, 0.000001));
+                nx = dx / dist;
+                ny = dy / dist;
+                if (!isFinite(nx) || !isFinite(ny)) {
+                    const a1 = Math.random() * Math.PI * 2;
+                    nx = Math.cos(a1);
+                    ny = Math.sin(a1);
+                }
+
+                const overlap = pairMinDistance - dist;
+                const correction = (Math.max(overlap - 0.1, 0) / invMassSum) * 0.85;
                 if (!a.frozen) {
-                    a.x -= nx * overlap * pushStrength;
-                    a.y -= ny * overlap * pushStrength;
+                    a.x -= nx * correction * invMassA;
+                    a.y -= ny * correction * invMassA;
                 }
                 if (!b.frozen) {
-                    b.x += nx * overlap * pushStrength;
-                    b.y += ny * overlap * pushStrength;
+                    b.x += nx * correction * invMassB;
+                    b.y += ny * correction * invMassB;
                 }
-                
-                // Exchange velocity (only for non-frozen)
-                if (!a.frozen && !b.frozen) {
-                    const dvx = a.vx - b.vx;
-                    const dvy = a.vy - b.vy;
-                    a.vx -= nx * dvx * 0.15;
-                    a.vy -= ny * dvy * 0.15;
-                    b.vx += nx * dvx * 0.15;
-                    b.vy += ny * dvy * 0.15;
-                }
+            }
+
+            const rvx = b.vx - a.vx;
+            const rvy = b.vy - a.vy;
+            const velAlongNormal = rvx * nx + rvy * ny;
+            if (velAlongNormal >= 0) continue;
+
+            const restitution = isBreakoutRound ? 0.86 : 0.88;
+            const impulseScalar = -(1 + restitution) * velAlongNormal / invMassSum;
+            const impulseX = impulseScalar * nx;
+            const impulseY = impulseScalar * ny;
+
+            if (!a.frozen) {
+                a.vx -= impulseX * invMassA;
+                a.vy -= impulseY * invMassA;
+            }
+            if (!b.frozen) {
+                b.vx += impulseX * invMassB;
+                b.vy += impulseY * invMassB;
             }
         }
     }
@@ -3017,7 +3185,8 @@ if (card.type === 'english') {
     if (card.pairKey === state.selectedCard.pairKey) {
         // Correct match!
         speakFrench(card.wordData.french);
-        
+        showTranslationToast(card.wordData);
+
         const frenchCard = state.selectedCard;
         
         frenchCard.element.classList.remove('selected');
@@ -3311,6 +3480,7 @@ state.learnedCount += 1;
     updateProgressDisplay();
 
     speakFrench(displayFrench);
+    showTranslationToast(card1.wordData || card2.wordData);
 
     // Track matched
     state.matchedKeys.add(key);
@@ -3404,32 +3574,61 @@ console.warn('Congratulations speech failed:', e);
 }
 
 
+function showTranslationToast(wordData) {
+    if (!wordData?.english) return;
+    const el = document.createElement('div');
+    el.className = 'translation-toast';
+    const prefix = wordData.emoji ? wordData.emoji + ' ' : '';
+    el.textContent = `${prefix}${wordData.french} = ${wordData.english}`;
+    gameArea.appendChild(el);
+    setTimeout(() => el.classList.add('fade-out'), 1400);
+    setTimeout(() => { if (el.parentNode) el.remove(); }, 1900);
+}
+
+function showEnglishHint(emojiCard) {
+    if (!emojiCard?.wordData?.english) return;
+    if (emojiCard.element.querySelector('.english-hint')) return;
+    const hint = document.createElement('div');
+    hint.className = 'english-hint';
+    hint.textContent = emojiCard.wordData.english;
+    emojiCard.element.appendChild(hint);
+}
+
 function handleWrongMatch(card1, card2) {
     // Flash red
     card1.element.classList.add('incorrect');
     card2.element.classList.add('incorrect');
-    
+
     // Find the emoji card and show the French word
     const emojiCard = card1.type === 'emoji' ? card1 : card2;
+    const pairKey = emojiCard.pairKey || normalizeFrench(emojiCard.wordData?.french);
     const originalContent = emojiCard.element.textContent;
-    
+
     // Show the correct French word on the emoji
     emojiCard.element.textContent = emojiCard.wordData.french;
     emojiCard.element.classList.add('show-word');
-    
+
+    // Track wrong count; reveal English hint on 3rd miss
+    state.wrongCounts[pairKey] = (state.wrongCounts[pairKey] || 0) + 1;
+    if (state.wrongCounts[pairKey] >= 3) {
+        showEnglishHint(emojiCard);
+    }
+
     setTimeout(() => {
         card1.element.classList.remove('selected', 'incorrect');
         card2.element.classList.remove('selected', 'incorrect');
-        
-        // Restore emoji
+
+        // Restore emoji (re-attach hint if it was added)
+        const existingHint = emojiCard.element.querySelector('.english-hint');
         emojiCard.element.textContent = originalContent;
+        if (existingHint) emojiCard.element.appendChild(existingHint);
         emojiCard.element.classList.remove('show-word');
-        
+
         // Unfreeze both cards
         card1.frozen = false;
         card2.frozen = false;
     }, 1000);
-    
+
     state.selectedCard = null;
 }
 
@@ -3551,7 +3750,7 @@ function spawnBounceEmoji(wordData) {
     
     // Random direction, 50% faster base speed
     const angle = (Math.PI * 0.15) + Math.random() * (Math.PI * 0.7); // mostly downward
-    const speed = 2.437 + Math.random() * 2.031;
+    const speed = 2.193 + Math.random() * 1.828;
     
     state.bounceEmojis.push({
         wordData,
@@ -3576,11 +3775,17 @@ function updatePaddleMode(deltaTime) {
     const paddleY = areaHeight - paddleHeight - 12;
     const paddle = document.getElementById('paddle');
     
-    // Move paddle smoothly
-    const pSpeed = 8 * deltaTime;
-    if (state.paddleMoving.left) state.paddleX -= pSpeed;
-    if (state.paddleMoving.right) state.paddleX += pSpeed;
+    // Move paddle with drift — accelerate toward target, coast on release
+    const maxPSpeed = 11.52;
+    const targetVx = state.paddleMoving.left ? -maxPSpeed : state.paddleMoving.right ? maxPSpeed : 0;
+    if (targetVx !== 0) {
+        state.paddleVx += (targetVx - state.paddleVx) * 0.3 * deltaTime;
+    } else {
+        state.paddleVx *= Math.pow(0.78, deltaTime);
+    }
+    state.paddleX += state.paddleVx * deltaTime;
     state.paddleX = Math.max(0, Math.min(areaWidth - paddleWidth, state.paddleX));
+    if (state.paddleX <= 0 || state.paddleX >= areaWidth - paddleWidth) state.paddleVx = 0;
     paddle.style.left = state.paddleX + 'px';
     
     const paddleCX = state.paddleX + paddleWidth / 2;
@@ -3634,6 +3839,7 @@ function updatePaddleMode(deltaTime) {
                 normalizeFrench(em.wordData.french) === normalizeFrench(state.paddleWord.french)) {
                 // ✓ CORRECT — destroy emoji
                 speakFrench(em.wordData.french);
+                showTranslationToast(em.wordData);
                 handleLearnProgress(em.wordData.french);
                 
                 em.alive = false;
@@ -3688,31 +3894,38 @@ function updatePaddleMode(deltaTime) {
             
             const dx = (em.x + em.size/2) - (other.x + other.size/2);
             const dy = (em.y + em.size/2) - (other.y + other.size/2);
-            const dist = Math.sqrt(dx*dx + dy*dy);
+            const distSq = dx * dx + dy * dy;
             const minDist = (em.size + other.size) / 2;
             
-            if (dist < minDist && dist > 0) {
-                const nx = dx / dist;
-                const ny = dy / dist;
-                const overlap = minDist - dist;
-                
-                em.x += nx * overlap * 0.5;
-                em.y += ny * overlap * 0.5;
-                other.x -= nx * overlap * 0.5;
-                other.y -= ny * overlap * 0.5;
-                
-                const dvx = em.vx - other.vx;
-                const dvy = em.vy - other.vy;
-                const dot = dvx * nx + dvy * ny;
-                
-                if (dot > 0) {
-                    const impulse = Math.max(dot, 1.0);
-                    em.vx -= impulse * nx;
-                    em.vy -= impulse * ny;
-                    other.vx += impulse * nx;
-                    other.vy += impulse * ny;
-                }
+            if (distSq >= minDist * minDist) continue;
+
+            const dist = Math.sqrt(Math.max(distSq, 0.000001));
+            let nx = dx / dist;
+            let ny = dy / dist;
+            if (!isFinite(nx) || !isFinite(ny)) {
+                const a1 = Math.random() * Math.PI * 2;
+                nx = Math.cos(a1);
+                ny = Math.sin(a1);
             }
+
+            const overlap = minDist - dist;
+            const separation = overlap * 0.5 + 0.6;
+            em.x += nx * separation;
+            em.y += ny * separation;
+            other.x -= nx * separation;
+            other.y -= ny * separation;
+
+            const rvx = em.vx - other.vx;
+            const rvy = em.vy - other.vy;
+            const velAlongNormal = rvx * nx + rvy * ny;
+            if (velAlongNormal >= 0) continue;
+
+            const restitution = 0.92;
+            const impulse = -((1 + restitution) * velAlongNormal) / 2;
+            em.vx += impulse * nx;
+            em.vy += impulse * ny;
+            other.vx -= impulse * nx;
+            other.vy -= impulse * ny;
         }
         
         
@@ -3871,12 +4084,19 @@ function handleTypingInput(numeral) {
 // PAUSE
 // ============================================
 function togglePause() {
-    state.paused = !state.paused;
-    pauseOverlay.classList.toggle('show', state.paused);
-    pauseBtn.textContent = state.paused ? 'Resume' : 'Pause';
+    if (state.paused) {
+        state.paused = false;
+        pauseOverlay.classList.remove('show');
+        pauseBtn.textContent = 'Pause';
+    } else {
+        state.paused = true;
+        pauseOverlay.classList.add('show');
+        pauseBtn.textContent = 'Resume';
+    }
 }
 
-function runCountdown(callback) {
+function runCountdown(callback, immediate = false) {
+    if (immediate) { callback(); return; }
     const el = document.getElementById('round-countdown');
     if (!el) { setTimeout(callback, 3000); return; }
     const steps = ['3', '2', '1'];
