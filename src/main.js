@@ -1076,6 +1076,8 @@ function setupRound() {
     state.comboMode = false;
     state.shooterMode = false;
     state.pongMode = false;
+    const isBreakoutRound = state.currentRound === 3 || state.currentRound >= 7;
+    state.velocityMultiplier = isBreakoutRound ? 0.2 : 1.0;
     cleanupPongMode();
     state.missiles = [];
     state.paddleWord = null;
@@ -1557,6 +1559,16 @@ function getSpawnPosition() {
             break;
     }
     
+    // Non-breakout rounds: round-scaled launch speed with wider tile-to-tile variance
+    if (!(state.currentRound === 3 || state.currentRound >= 7)) {
+        const baseMag = Math.hypot(vx, vy) || 1;
+        const displayRound = state.currentRound === 4 ? 3 : state.currentRound === 5 ? 4 : Math.max(1, state.currentRound || 1);
+        const roundBoost = Math.min(0.42, (displayRound - 1) * 0.14);
+        const targetSpeed = 0.82 + roundBoost + Math.random() * 1.92;
+        vx = (vx / baseMag) * targetSpeed;
+        vy = (vy / baseMag) * targetSpeed;
+    }
+
     return { x, y, vx, vy };
 }
 
@@ -2859,23 +2871,33 @@ function update(currentTime) {
 function updateCards(deltaTime) {
     const areaWidth = gameArea.offsetWidth - 60;
     const areaHeight = gameArea.offsetHeight;
-    const minDistance = 75;
     const centerX = areaWidth / 2;
     const centerY = areaHeight / 2;
+    const isBreakoutRound = state.shooterMode;
     
     for (const card of state.cards) {
         // Skip frozen cards (selected)
         if (card.frozen) continue;
+
+        // Keep physics bounds aligned with rendered size (important for R5 reveal/shape changes).
+        if (!isBreakoutRound && card.element) {
+            const liveW = card.element.offsetWidth;
+            const liveH = card.element.offsetHeight;
+            if (liveW > 0 && liveH > 0 && (liveW !== card.width || liveH !== card.height)) {
+                card.width = liveW;
+                card.height = liveH;
+            }
+        }
         
         // Apply velocity
         card.x += card.vx * deltaTime * state.velocityMultiplier;
         card.y += card.vy * deltaTime * state.velocityMultiplier;
         
-        // Gravity (reduced)
-        card.vy += 0.008 * deltaTime * state.velocityMultiplier;
-        
-        // In shooter mode, push cards away from center where croissant is
-        if (state.shooterMode) {
+        if (isBreakoutRound) {
+            // Gravity (reduced)
+            card.vy += 0.008 * deltaTime * state.velocityMultiplier;
+
+            // In breakout mode, push cards away from center where croissant is
             const cardCenterX = card.x + card.width / 2;
             const cardCenterY = card.y + card.height / 2;
             const dx = cardCenterX - centerX;
@@ -2888,83 +2910,169 @@ function updateCards(deltaTime) {
                 card.vx += (dx / distToCenter) * pushStrength;
                 card.vy += (dy / distToCenter) * pushStrength;
             }
-        }
-        
-        // Gentle push away from edges/corners
-        const edgeMargin = 80;
-        if (card.x < edgeMargin) {
-            card.vx += 0.02 * (edgeMargin - card.x) / edgeMargin;
-        }
-        if (card.x + card.width > areaWidth - edgeMargin) {
-            card.vx -= 0.02 * (card.x + card.width - (areaWidth - edgeMargin)) / edgeMargin;
-        }
-        if (card.y > areaHeight - edgeMargin - card.height) {
-            card.vy -= 0.01;
-        }
-        
-        // Air resistance (more dampening)
-        card.vx *= 0.99;
-        card.vy *= 0.995;
-        
-        // Bounce off walls (reduced)
-        if (card.x < 10) {
-            card.x = 10;
-            card.vx = Math.abs(card.vx) * 0.4 + 0.1;
-        }
-        if (card.x + card.width > areaWidth) {
-            card.x = areaWidth - card.width;
-            card.vx = -Math.abs(card.vx) * 0.4 - 0.1;
-        }
-        
-        // Bounce off bottom (reduced)
-        if (card.y + card.height > areaHeight - 10) {
-            card.y = areaHeight - card.height - 10;
-            card.vy = -Math.abs(card.vy) * 0.3 - 0.05;
-            card.vx += (Math.random() - 0.5) * 0.2;
-        }
-        
-        // Bounce off top (keep cards in play)
-        if (card.y < 10) {
-            card.y = 10;
-            card.vy = Math.abs(card.vy) * 0.2;
+            // Gentle push away from edges/corners
+            const edgeMargin = 80;
+            if (card.x < edgeMargin) {
+                card.vx += 0.02 * (edgeMargin - card.x) / edgeMargin;
+            }
+            if (card.x + card.width > areaWidth - edgeMargin) {
+                card.vx -= 0.02 * (card.x + card.width - (areaWidth - edgeMargin)) / edgeMargin;
+            }
+            if (card.y > areaHeight - edgeMargin - card.height) {
+                card.vy -= 0.01;
+            }
+
+            // Air resistance (more dampening)
+            card.vx *= 0.99;
+            card.vy *= 0.995;
+
+            // Bounce off walls (reduced)
+            if (card.x < 10) {
+                card.x = 10;
+                card.vx = Math.abs(card.vx) * 0.4 + 0.1;
+            }
+            if (card.x + card.width > areaWidth) {
+                card.x = areaWidth - card.width;
+                card.vx = -Math.abs(card.vx) * 0.4 - 0.1;
+            }
+
+            // Bounce off bottom (reduced)
+            if (card.y + card.height > areaHeight - 10) {
+                card.y = areaHeight - card.height - 10;
+                card.vy = -Math.abs(card.vy) * 0.3 - 0.05;
+                card.vx += (Math.random() - 0.5) * 0.2;
+            }
+
+            // Bounce off top (keep cards in play)
+            if (card.y < 10) {
+                card.y = 10;
+                card.vy = Math.abs(card.vy) * 0.2;
+            }
+        } else {
+            // Free-bounce card physics for rounds 1/2/4/5: no gravity, preserve motion
+            card.vx *= 0.998;
+            card.vy *= 0.998;
+
+            if (card.speedVariance == null) {
+                card.speedVariance = 0.88 + Math.random() * 0.48;
+            }
+            const speed = Math.hypot(card.vx, card.vy);
+            const minSpeed = 0.7 * card.speedVariance;
+            const maxSpeed = 2.55 * card.speedVariance;
+            if (speed < minSpeed) {
+                if (speed < 0.0001) {
+                    const angle = Math.random() * Math.PI * 2;
+                    card.vx = Math.cos(angle) * minSpeed;
+                    card.vy = Math.sin(angle) * minSpeed;
+                } else {
+                    card.vx = (card.vx / speed) * minSpeed;
+                    card.vy = (card.vy / speed) * minSpeed;
+                }
+            } else if (speed > maxSpeed) {
+                card.vx = (card.vx / speed) * maxSpeed;
+                card.vy = (card.vy / speed) * maxSpeed;
+            }
+
+            if (card.x < 10) {
+                card.x = 10;
+                card.vx = Math.abs(card.vx);
+            }
+            if (card.x + card.width > areaWidth) {
+                card.x = areaWidth - card.width;
+                card.vx = -Math.abs(card.vx);
+            }
+            if (card.y < 10) {
+                card.y = 10;
+                card.vy = Math.abs(card.vy);
+            }
+            if (card.y + card.height > areaHeight - 10) {
+                card.y = areaHeight - card.height - 10;
+                card.vy = -Math.abs(card.vy);
+            }
         }
     }
     
-    // Card-card collisions (skip frozen cards) - with stronger separation
+    // Card-card collisions
     for (let i = 0; i < state.cards.length; i++) {
         for (let j = i + 1; j < state.cards.length; j++) {
             const a = state.cards[i];
             const b = state.cards[j];
-            
-            const dx = (b.x + b.width/2) - (a.x + a.width/2);
-            const dy = (b.y + b.height/2) - (a.y + a.height/2);
-            const dist = Math.hypot(dx, dy);
-            
-            if (dist < minDistance && dist > 0) {
-                const overlap = minDistance - dist;
-                const nx = dx / dist;
-                const ny = dy / dist;
-                
-                // Push apart (stronger)
-                const pushStrength = 0.4;
+            if (a.frozen && b.frozen) continue;
+
+            const invMassA = a.frozen ? 0 : 1;
+            const invMassB = b.frozen ? 0 : 1;
+            const invMassSum = invMassA + invMassB;
+            if (invMassSum === 0) continue;
+
+            let nx = 0;
+            let ny = 0;
+
+            if (!isBreakoutRound) {
+                const overlapX = Math.min(a.x + a.width, b.x + b.width) - Math.max(a.x, b.x);
+                const overlapY = Math.min(a.y + a.height, b.y + b.height) - Math.max(a.y, b.y);
+                if (overlapX <= 0 || overlapY <= 0) continue;
+
+                if (overlapX < overlapY) {
+                    // Match L3-style impulse convention: normal points from A -> B.
+                    nx = (a.x + a.width / 2) < (b.x + b.width / 2) ? 1 : -1;
+                    ny = 0;
+                    const correction = (Math.max(overlapX - 0.05, 0) / invMassSum) * 0.9;
+                    if (!a.frozen) a.x -= nx * correction * invMassA;
+                    if (!b.frozen) b.x += nx * correction * invMassB;
+                } else {
+                    nx = 0;
+                    ny = (a.y + a.height / 2) < (b.y + b.height / 2) ? 1 : -1;
+                    const correction = (Math.max(overlapY - 0.05, 0) / invMassSum) * 0.9;
+                    if (!a.frozen) a.y -= ny * correction * invMassA;
+                    if (!b.frozen) b.y += ny * correction * invMassB;
+                }
+            } else {
+                const dx = (b.x + b.width/2) - (a.x + a.width/2);
+                const dy = (b.y + b.height/2) - (a.y + a.height/2);
+                const radiusA = Math.max(24, Math.min(a.width, a.height) * 0.48);
+                const radiusB = Math.max(24, Math.min(b.width, b.height) * 0.48);
+                const pairMinDistance = radiusA + radiusB;
+                const distSq = dx * dx + dy * dy;
+                if (distSq >= pairMinDistance * pairMinDistance) continue;
+
+                const dist = Math.sqrt(Math.max(distSq, 0.000001));
+                nx = dx / dist;
+                ny = dy / dist;
+                if (!isFinite(nx) || !isFinite(ny)) {
+                    const a1 = Math.random() * Math.PI * 2;
+                    nx = Math.cos(a1);
+                    ny = Math.sin(a1);
+                }
+
+                const overlap = pairMinDistance - dist;
+                const correction = (Math.max(overlap - 0.1, 0) / invMassSum) * 0.85;
                 if (!a.frozen) {
-                    a.x -= nx * overlap * pushStrength;
-                    a.y -= ny * overlap * pushStrength;
+                    a.x -= nx * correction * invMassA;
+                    a.y -= ny * correction * invMassA;
                 }
                 if (!b.frozen) {
-                    b.x += nx * overlap * pushStrength;
-                    b.y += ny * overlap * pushStrength;
+                    b.x += nx * correction * invMassB;
+                    b.y += ny * correction * invMassB;
                 }
-                
-                // Exchange velocity (only for non-frozen)
-                if (!a.frozen && !b.frozen) {
-                    const dvx = a.vx - b.vx;
-                    const dvy = a.vy - b.vy;
-                    a.vx -= nx * dvx * 0.15;
-                    a.vy -= ny * dvy * 0.15;
-                    b.vx += nx * dvx * 0.15;
-                    b.vy += ny * dvy * 0.15;
-                }
+            }
+
+            const rvx = b.vx - a.vx;
+            const rvy = b.vy - a.vy;
+            const velAlongNormal = rvx * nx + rvy * ny;
+            if (velAlongNormal >= 0) continue;
+
+            const restitution = isBreakoutRound ? 0.86 : 0.88;
+            const impulseScalar = -(1 + restitution) * velAlongNormal / invMassSum;
+            const impulseX = impulseScalar * nx;
+            const impulseY = impulseScalar * ny;
+
+            if (!a.frozen) {
+                a.vx -= impulseX * invMassA;
+                a.vy -= impulseY * invMassA;
+            }
+            if (!b.frozen) {
+                b.vx += impulseX * invMassB;
+                b.vy += impulseY * invMassB;
             }
         }
     }
@@ -3765,33 +3873,38 @@ function updatePaddleMode(deltaTime) {
             
             const dx = (em.x + em.size/2) - (other.x + other.size/2);
             const dy = (em.y + em.size/2) - (other.y + other.size/2);
-            const dist = Math.sqrt(dx*dx + dy*dy);
+            const distSq = dx * dx + dy * dy;
             const minDist = (em.size + other.size) / 2;
             
-            if (dist < minDist && dist > 0) {
-                const nx = dx / dist;
-                const ny = dy / dist;
-                const overlap = minDist - dist;
-                
-                // Push apart with a small extra gap to prevent immediate re-overlap
-                const push = overlap * 0.5 + 0.5;
-                em.x += nx * push;
-                em.y += ny * push;
-                other.x -= nx * push;
-                other.y -= ny * push;
+            if (distSq >= minDist * minDist) continue;
 
-                const dvx = em.vx - other.vx;
-                const dvy = em.vy - other.vy;
-                const dot = dvx * nx + dvy * ny;
-
-                if (dot > 0) {
-                    const impulse = Math.max(dot, 0.5);
-                    em.vx -= impulse * nx;
-                    em.vy -= impulse * ny;
-                    other.vx += impulse * nx;
-                    other.vy += impulse * ny;
-                }
+            const dist = Math.sqrt(Math.max(distSq, 0.000001));
+            let nx = dx / dist;
+            let ny = dy / dist;
+            if (!isFinite(nx) || !isFinite(ny)) {
+                const a1 = Math.random() * Math.PI * 2;
+                nx = Math.cos(a1);
+                ny = Math.sin(a1);
             }
+
+            const overlap = minDist - dist;
+            const separation = overlap * 0.5 + 0.6;
+            em.x += nx * separation;
+            em.y += ny * separation;
+            other.x -= nx * separation;
+            other.y -= ny * separation;
+
+            const rvx = em.vx - other.vx;
+            const rvy = em.vy - other.vy;
+            const velAlongNormal = rvx * nx + rvy * ny;
+            if (velAlongNormal >= 0) continue;
+
+            const restitution = 0.92;
+            const impulse = -((1 + restitution) * velAlongNormal) / 2;
+            em.vx += impulse * nx;
+            em.vy += impulse * ny;
+            other.vx -= impulse * nx;
+            other.vy -= impulse * ny;
         }
         
         
