@@ -129,8 +129,9 @@ body {
 }
 
 #voice-select {
-    padding: 5px 8px;
+    padding: 6px 8px;
     font-size: 13px;
+    line-height: 1;
     border: 1px solid #ddd;
     border-radius: 6px;
     background: #f2f2f2;
