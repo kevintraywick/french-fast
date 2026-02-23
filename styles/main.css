@@ -1404,6 +1404,22 @@ body.dark-mode .pong-subtitle {
     color: #bbb;
     background: rgba(30,30,45,0.88);
 }
+.pong-particle {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #fff 0%, #90EE90 50%, #4CAF50 100%);
+    pointer-events: none;
+    z-index: 50;
+    transform: translate(-50%, -50%);
+    animation: pongParticleBurst 0.55s ease-out forwards;
+}
+@keyframes pongParticleBurst {
+    0%   { transform: translate(-50%, -50%) translate(0, 0) scale(1); opacity: 1; }
+    100% { transform: translate(-50%, -50%) translate(var(--dx), var(--dy)) scale(0); opacity: 0; }
+}
+
 .pong-hint {
     position: absolute;
     bottom: 60px;

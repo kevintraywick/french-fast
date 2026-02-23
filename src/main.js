@@ -746,6 +746,7 @@ function updatePongMode(deltaTime) {
         if (horizHit && vertHit) {
             pongState.missileEl.style.display = 'none';
             pongState.missileActive = false;
+            spawnPongExplosion(pongState.missileX, pongState.phraseY + phraseH / 2);
 
             if (pongState.missileValid) {
                 speakFrench(pongState.launchedText);
@@ -842,6 +843,24 @@ function launchPongMissile() {
     const paddle = document.getElementById('paddle');
     paddle.textContent = 'Space to load';
     document.getElementById('paddle-container').classList.remove('pong-loaded');
+}
+
+function spawnPongExplosion(cx, cy) {
+    const count = 12;
+    for (let i = 0; i < count; i++) {
+        const angle = (i / count) * Math.PI * 2;
+        const dist = 40 + Math.random() * 40;
+        const dx = Math.cos(angle) * dist;
+        const dy = Math.sin(angle) * dist;
+        const p = document.createElement('div');
+        p.className = 'pong-particle';
+        p.style.left = cx + 'px';
+        p.style.top = cy + 'px';
+        p.style.setProperty('--dx', dx + 'px');
+        p.style.setProperty('--dy', dy + 'px');
+        gameArea.appendChild(p);
+        setTimeout(() => { if (p.parentNode) p.remove(); }, 600);
+    }
 }
 
 function cleanupPongMode() {
