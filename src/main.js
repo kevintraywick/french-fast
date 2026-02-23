@@ -3589,7 +3589,7 @@ function spawnBounceEmoji(wordData) {
     
     // Random direction, 50% faster base speed
     const angle = (Math.PI * 0.15) + Math.random() * (Math.PI * 0.7); // mostly downward
-    const speed = 2.437 + Math.random() * 2.031;
+    const speed = 2.193 + Math.random() * 1.828;
     
     state.bounceEmojis.push({
         wordData,
@@ -3615,7 +3615,7 @@ function updatePaddleMode(deltaTime) {
     const paddle = document.getElementById('paddle');
     
     // Move paddle smoothly
-    const pSpeed = 8 * deltaTime;
+    const pSpeed = 9.6 * deltaTime;
     if (state.paddleMoving.left) state.paddleX -= pSpeed;
     if (state.paddleMoving.right) state.paddleX += pSpeed;
     state.paddleX = Math.max(0, Math.min(areaWidth - paddleWidth, state.paddleX));
@@ -3734,17 +3734,19 @@ function updatePaddleMode(deltaTime) {
                 const ny = dy / dist;
                 const overlap = minDist - dist;
                 
-                em.x += nx * overlap * 0.5;
-                em.y += ny * overlap * 0.5;
-                other.x -= nx * overlap * 0.5;
-                other.y -= ny * overlap * 0.5;
-                
+                // Push apart with a small extra gap to prevent immediate re-overlap
+                const push = overlap * 0.5 + 0.5;
+                em.x += nx * push;
+                em.y += ny * push;
+                other.x -= nx * push;
+                other.y -= ny * push;
+
                 const dvx = em.vx - other.vx;
                 const dvy = em.vy - other.vy;
                 const dot = dvx * nx + dvy * ny;
-                
+
                 if (dot > 0) {
-                    const impulse = Math.max(dot, 1.0);
+                    const impulse = Math.max(dot, 0.5);
                     em.vx -= impulse * nx;
                     em.vy -= impulse * ny;
                     other.vx += impulse * nx;
