@@ -3615,7 +3615,7 @@ function updatePaddleMode(deltaTime) {
     const paddle = document.getElementById('paddle');
     
     // Move paddle smoothly
-    const pSpeed = 9.6 * deltaTime;
+    const pSpeed = 11.52 * deltaTime;
     if (state.paddleMoving.left) state.paddleX -= pSpeed;
     if (state.paddleMoving.right) state.paddleX += pSpeed;
     state.paddleX = Math.max(0, Math.min(areaWidth - paddleWidth, state.paddleX));
