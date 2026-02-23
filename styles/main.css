@@ -694,6 +694,12 @@ body.dark-mode .english-hint {
     100% { border-color: #3F51B5; }
 }
 
+/* Croissant shooter ship */
+#croissant-shooter {
+    display: none;
+}
+#croissant-shooter.show { display: block; }
+
 /* Paddle (Round 4+ Breakout) */
 #paddle-container {
     display: none;
