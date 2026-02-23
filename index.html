@@ -17,6 +17,7 @@
             </div>
             <div id="voice-control" style="display:flex;align-items:center;gap:8px;">
                 <button id="voice-test-btn" style="padding:7px 10px;font-size:12px;background:#f7f7f7;border:1px solid #ddd;border-radius:6px;cursor:pointer;">Enable Audio</button>
+                <select id="voice-select" style="padding:5px 8px;font-size:12px;border:1px solid #ddd;border-radius:6px;background:#f7f7f7;cursor:pointer;max-width:140px;"></select>
             </div>
             <button id="theme-toggle-btn" title="Toggle dark/light mode">🌙</button>
             <button id="pause-btn">Pause</button>
@@ -32,12 +33,14 @@
             <div id="paddle-container">
                 <div id="paddle"></div>
             </div>
-            <div id="paddle-hint">← → move · Space change word · Catch emojis!</div>
+            <div id="paddle-hint">← → move · Space/⇧Space cycle word · Catch emojis!</div>
             <div id="breakout-score">0</div>
             <div id="streak-counter"></div>
             <div id="color-flash"></div>
         </div>
         
+        <div id="round-countdown"></div>
+
         <div id="progress-container">
             <div id="progress-bar-container">
                 <div id="progress-bar" style="height: 0%"></div>
