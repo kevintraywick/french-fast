@@ -3672,6 +3672,7 @@ function updatePaddleMode(deltaTime) {
                 normalizeFrench(em.wordData.french) === normalizeFrench(state.paddleWord.french)) {
                 // ✓ CORRECT — destroy emoji
                 speakFrench(em.wordData.french);
+                showTranslationToast(em.wordData);
                 handleLearnProgress(em.wordData.french);
                 
                 em.alive = false;
