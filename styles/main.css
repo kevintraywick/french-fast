@@ -23,9 +23,8 @@ body {
 #top-bar {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    padding: 8px 16px;
-    gap: 10px;
+    padding: 7px 16px;
+    gap: 12px;
     background: white;
     border-bottom: 1px solid #e0e0e0;
     position: relative;
@@ -33,7 +32,29 @@ body {
     flex-shrink: 0;
 }
 
-/* ── Top-bar base button style ── */
+/* ── Left/right clusters ── */
+.top-bar-left {
+    display: flex;
+    align-items: center;
+    gap: 0;
+}
+
+.top-bar-right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: auto;
+}
+
+/* Subtle dividers between left cluster items */
+.top-bar-left > * {
+    padding: 0 12px;
+    border-right: 1px solid #e8e8e8;
+}
+.top-bar-left > *:first-child { padding-left: 0; }
+.top-bar-left > *:last-child { border-right: none; padding-right: 0; }
+
+/* ── Base button style ── */
 #top-bar button {
     padding: 6px 12px;
     font-size: 13px;
@@ -47,7 +68,7 @@ body {
 }
 #top-bar button:hover { background: #e6e6e6; }
 
-/* Round display */
+/* ── Round display ── */
 #round-display {
     display: flex;
     align-items: center;
@@ -57,51 +78,50 @@ body {
 
 #round-label {
     display: inline-block;
-    min-width: 220px;
+    min-width: 210px;
     text-align: center;
     font-size: 15px;
     font-weight: 600;
-    color: #333;
+    color: #222;
+}
+
+#round-theme {
+    font-weight: 400;
+    color: #1976d2;
 }
 
 /* Nav buttons narrower since icon-only */
 #prev-round-btn,
 #skip-round-btn {
-    padding: 6px 9px;
+    padding: 5px 8px;
 }
 
-/* Round timer */
+/* ── Timer ── */
 #round-timer {
     font-size: 13px;
     font-variant-numeric: tabular-nums;
     color: #555;
-    padding: 5px 10px;
-    background: #f8f8f8;
-    border: 1px solid #e4e4e4;
-    border-radius: 999px;
     white-space: nowrap;
 }
 
+/* ── Match counter ── */
 #match-counter {
     font-size: 13px;
-    color: #666;
+    color: #888;
     white-space: nowrap;
+    font-variant-numeric: tabular-nums;
 }
 
-#speed-control {
-    display: flex;
-    align-items: center;
-}
-
+/* ── Score (breakout, hidden otherwise) ── */
 #top-score {
-    font-size: 28px;
+    font-size: 26px;
     font-weight: 800;
     font-family: 'Courier New', monospace;
     color: #4CAF50;
     display: none;
 }
 
-/* Voice control */
+/* ── Voice control ── */
 #voice-control {
     display: flex;
     align-items: center;
@@ -115,21 +135,18 @@ body {
     border-radius: 6px;
     background: #f2f2f2;
     cursor: pointer;
-    max-width: 140px;
+    max-width: 130px;
 }
 #voice-select:focus { outline: 2px solid rgba(66,133,244,0.35); outline-offset: 2px; }
 
-/* Audio toggle button states */
+/* ── Audio toggle states ── */
 #voice-test-btn.audio-on {
     background: #e8f5e9;
     border-color: #81c784;
     color: #2e7d32;
 }
 #voice-test-btn.audio-on:hover { background: #dcedc8; }
-#voice-test-btn.audio-off {
-    background: #f2f2f2;
-    color: #999;
-}
+#voice-test-btn.audio-off { color: #aaa; }
 
 
 #breakout-score {
@@ -1165,22 +1182,13 @@ body.dark-mode #top-bar {
     background: #1a1a2e;
     border-bottom-color: #2a2a4a;
 }
-body.dark-mode #round-display,
-body.dark-mode #match-counter,
-body.dark-mode #round-timer {
-    background: #2a2a4a;
-    border-color: #3a3a5a;
-    color: #c8c8e0;
-}
 body.dark-mode #top-bar button {
     background: #2a2a4a;
     border-color: #3a3a5a;
     color: #c8c8e0;
 }
-body.dark-mode #top-bar button:hover {
-    background: #3a3a5a;
-}
-body.dark-mode #top-bar button#voice-test-btn.audio-on {
+body.dark-mode #top-bar button:hover { background: #3a3a5a; }
+body.dark-mode #voice-test-btn.audio-on {
     background: #1a3a2a;
     border-color: #4a8a5a;
     color: #81c784;
@@ -1191,7 +1199,10 @@ body.dark-mode #voice-select {
     color: #c8c8e0;
 }
 body.dark-mode #round-label { color: #c8c8e0; }
-body.dark-mode #round-timer { background: #1a1a2e; border-color: #2a2a4a; color: #9090b0; }
+body.dark-mode #round-theme { color: #64b5f6; }
+body.dark-mode #round-timer { color: #8888aa; }
+body.dark-mode #match-counter { color: #6666aa; }
+body.dark-mode .top-bar-left > * { border-right-color: #2a2a4a; }
 body.dark-mode .emoji-card {
     background: #2a2a4a;
 }
@@ -1266,7 +1277,6 @@ body.dark-mode #round-title-overlay {
 body.dark-mode #round-title-text { color: #c8c8e0; }
 body.dark-mode #round-title-instructions { color: #8888aa; }
 body.dark-mode #round-time-result { color: #8888aa !important; }
-body.dark-mode #round-timer { color: #c8c8e0 !important; }
 body.dark-mode .emoji-card {
     border-color: transparent;
 }
