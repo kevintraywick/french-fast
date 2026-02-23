@@ -345,7 +345,7 @@ const state = {
     cards: [],
     selectedCard: null,
     paused: false,
-    velocityMultiplier: 0.2,
+    velocityMultiplier: 1.0,
 
     // Player identification
     playerId: null,
@@ -1076,8 +1076,7 @@ function setupRound() {
     state.comboMode = false;
     state.shooterMode = false;
     state.pongMode = false;
-    const isBreakoutRound = state.currentRound === 3 || state.currentRound >= 7;
-    state.velocityMultiplier = isBreakoutRound ? 0.2 : 1.0;
+    state.velocityMultiplier = 1.0;
     cleanupPongMode();
     state.missiles = [];
     state.paddleWord = null;
@@ -4064,14 +4063,9 @@ function handleTypingInput(numeral) {
 // ============================================
 function togglePause() {
     if (state.paused) {
-        // Unpausing — close overlay then count down before resuming
+        state.paused = false;
         pauseOverlay.classList.remove('show');
         pauseBtn.textContent = 'Pause';
-        pauseBtn.disabled = true;
-        runCountdown(() => {
-            state.paused = false;
-            pauseBtn.disabled = false;
-        });
     } else {
         state.paused = true;
         pauseOverlay.classList.add('show');
