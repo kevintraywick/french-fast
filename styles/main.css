@@ -24,42 +24,111 @@ body {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 10px 20px;
+    padding: 8px 16px;
+    gap: 10px;
     background: white;
-    border-bottom: 1px solid #ddd;
+    border-bottom: 1px solid #e0e0e0;
     position: relative;
     z-index: 250;
     flex-shrink: 0;
 }
 
+/* ── Top-bar base button style ── */
+#top-bar button {
+    padding: 6px 12px;
+    font-size: 13px;
+    background: #f2f2f2;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    cursor: pointer;
+    white-space: nowrap;
+    line-height: 1;
+    transition: background 0.15s ease;
+}
+#top-bar button:hover { background: #e6e6e6; }
+
+/* Round display */
 #round-display {
-    font-size: 16px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+}
+
+#round-label {
+    display: inline-block;
+    min-width: 220px;
+    text-align: center;
+    font-size: 15px;
     font-weight: 600;
     color: #333;
 }
 
-/* Voice control */
-#voice-control select:focus { outline: 2px solid rgba(66,133,244,0.35); outline-offset: 2px; }
-#voice-test-btn:hover { background: #ededed; }
+/* Nav buttons narrower since icon-only */
+#prev-round-btn,
+#skip-round-btn {
+    padding: 6px 9px;
+}
 
 /* Round timer */
 #round-timer {
-    margin-left: 14px;
-    padding: 6px 10px;
-    background: #fafafa;
-    border: 1px solid #eee;
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+    color: #555;
+    padding: 5px 10px;
+    background: #f8f8f8;
+    border: 1px solid #e4e4e4;
     border-radius: 999px;
+    white-space: nowrap;
 }
 
 #match-counter {
-    font-size: 14px;
+    font-size: 13px;
     color: #666;
+    white-space: nowrap;
 }
 
 #speed-control {
     display: flex;
     align-items: center;
-    gap: 10px;
+}
+
+#top-score {
+    font-size: 28px;
+    font-weight: 800;
+    font-family: 'Courier New', monospace;
+    color: #4CAF50;
+    display: none;
+}
+
+/* Voice control */
+#voice-control {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+#voice-select {
+    padding: 5px 8px;
+    font-size: 13px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    background: #f2f2f2;
+    cursor: pointer;
+    max-width: 140px;
+}
+#voice-select:focus { outline: 2px solid rgba(66,133,244,0.35); outline-offset: 2px; }
+
+/* Audio toggle button states */
+#voice-test-btn.audio-on {
+    background: #e8f5e9;
+    border-color: #81c784;
+    color: #2e7d32;
+}
+#voice-test-btn.audio-on:hover { background: #dcedc8; }
+#voice-test-btn.audio-off {
+    background: #f2f2f2;
+    color: #999;
 }
 
 
@@ -146,35 +215,6 @@ body.dark-mode #breakout-score { text-shadow: 0 2px 6px rgba(0,0,0,0.5); }
 }
 
 
-#pause-btn {
-    padding: 8px 16px;
-    font-size: 14px;
-    background: #f0f0f0;
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    cursor: pointer;
-}
-
-#pause-btn:hover {
-    background: #e0e0e0;
-}
-
-#prev-round-btn,
-#skip-round-btn {
-    padding: 4px 8px;
-    font-size: 14px;
-    background: #f0f0f0;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    cursor: pointer;
-    margin-left: 8px;
-    vertical-align: middle;
-}
-
-#prev-round-btn:hover,
-#skip-round-btn:hover {
-    background: #e0e0e0;
-}
 
 #game-area {
     position: relative;
@@ -1084,18 +1124,7 @@ body.dark-mode #paddle-hint { color: #666; }
     font-weight: 500;
     margin-left: 8px;
 }
-/* Dark/Light mode toggle */
-#theme-toggle-btn {
-    padding: 6px 12px;
-    font-size: 14px;
-    background: #f0f0f0;
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    cursor: pointer;
-    margin-right: 6px;
-    white-space: nowrap;
-}
-#theme-toggle-btn:hover { background: #e0e0e0; }
+/* Dark/Light mode toggle — inherits base button style */
 
 /* Round countdown */
 #round-countdown {
@@ -1143,30 +1172,26 @@ body.dark-mode #round-timer {
     border-color: #3a3a5a;
     color: #c8c8e0;
 }
-body.dark-mode #pause-btn,
-body.dark-mode #prev-round-btn,
-body.dark-mode #skip-round-btn,
-body.dark-mode #theme-toggle-btn {
+body.dark-mode #top-bar button {
     background: #2a2a4a;
     border-color: #3a3a5a;
     color: #c8c8e0;
 }
-body.dark-mode #pause-btn:hover,
-body.dark-mode #prev-round-btn:hover,
-body.dark-mode #skip-round-btn:hover,
-body.dark-mode #theme-toggle-btn:hover {
+body.dark-mode #top-bar button:hover {
     background: #3a3a5a;
 }
-body.dark-mode #voice-test-btn {
-    background: #2a2a4a !important;
-    border-color: #3a3a5a !important;
-    color: #c8c8e0 !important;
+body.dark-mode #top-bar button#voice-test-btn.audio-on {
+    background: #1a3a2a;
+    border-color: #4a8a5a;
+    color: #81c784;
 }
 body.dark-mode #voice-select {
     background: #2a2a4a;
     border-color: #3a3a5a;
     color: #c8c8e0;
 }
+body.dark-mode #round-label { color: #c8c8e0; }
+body.dark-mode #round-timer { background: #1a1a2e; border-color: #2a2a4a; color: #9090b0; }
 body.dark-mode .emoji-card {
     background: #2a2a4a;
 }

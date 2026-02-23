@@ -1001,8 +1001,15 @@ handleCardClick(id);
 });
 // Voice controls
     primeVoices();
+    updateAudioBtn();
     if (voiceTestBtn) {
         voiceTestBtn.addEventListener('click', () => {
+            if (audioUnlocked) {
+                audioUnlocked = false;
+                saveVoiceSettings();
+                updateAudioBtn();
+                return;
+            }
             audioUnlocked = true;
             primeVoices();
             try {
@@ -1017,6 +1024,8 @@ handleCardClick(id);
                     window.speechSynthesis.speak(u);
                 }
             } catch (e) {}
+            saveVoiceSettings();
+            updateAudioBtn();
         });
     }
 
@@ -1982,6 +1991,19 @@ function updateVoiceStatus(msg, ok=false) {
     if (!voiceStatusEl) return;
     voiceStatusEl.textContent = msg || '';
     voiceStatusEl.style.color = ok ? '#2E7D32' : '#999';
+}
+
+function updateAudioBtn() {
+    if (!voiceTestBtn) return;
+    if (audioUnlocked) {
+        voiceTestBtn.textContent = '🔊 Audio';
+        voiceTestBtn.classList.add('audio-on');
+        voiceTestBtn.classList.remove('audio-off');
+    } else {
+        voiceTestBtn.textContent = '🔇 Audio';
+        voiceTestBtn.classList.remove('audio-on');
+        voiceTestBtn.classList.add('audio-off');
+    }
 }
 
 // Prime voices. On Safari/macOS, premium voices often appear only after a user-gesture speak.
