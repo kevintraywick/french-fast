@@ -276,18 +276,42 @@ const CAFE_ORDERING = [
 // PONG CONVERSATION DATA (Round 6)
 // ============================================
 const PONG_CONVERSATIONS = [
-    { prompt: "Bonjour !", validReplies: ["Bonjour !", "Salut !", "Bonsoir !"], distractors: ["Merci.", "Au revoir.", "Non merci."] },
-    { prompt: "Comment allez-vous ?", validReplies: ["Très bien, merci !", "Ça va bien.", "Pas mal, merci."], distractors: ["S'il vous plaît.", "Au revoir.", "Excusez-moi."] },
-    { prompt: "Qu'est-ce que vous désirez ?", validReplies: ["Un café, s'il vous plaît.", "Je voudrais un thé.", "Un croissant, merci."], distractors: ["Bonsoir !", "C'est combien ?", "Très bien."] },
-    { prompt: "Avec du lait ?", validReplies: ["Oui, s'il vous plaît.", "Non, merci.", "Un peu, merci."], distractors: ["Bonjour !", "C'est délicieux.", "Au revoir."] },
-    { prompt: "C'est combien ?", validReplies: ["Voilà cinq euros.", "Je peux payer par carte ?", "Gardez la monnaie."], distractors: ["Bonjour !", "Avec du lait ?", "Non merci."] },
-    { prompt: "Excusez-moi !", validReplies: ["Oui ?", "Je vous en prie.", "Bien sûr !"], distractors: ["Bonjour !", "Au revoir.", "Un thé."] },
-    { prompt: "Où sont les toilettes ?", validReplies: ["Là-bas, à droite.", "Au fond, à gauche.", "Au premier étage."], distractors: ["Bonjour !", "Merci beaucoup.", "Un café."] },
-    { prompt: "C'est délicieux !", validReplies: ["Merci beaucoup !", "Je suis content !", "C'est ma spécialité."], distractors: ["L'addition !", "Excusez-moi.", "Au revoir."] },
-    { prompt: "Vous parlez anglais ?", validReplies: ["Oui, un peu.", "Non, désolé.", "Je préfère le français !"], distractors: ["Bonjour !", "C'est combien ?", "Au revoir."] },
-    { prompt: "L'addition, s'il vous plaît.", validReplies: ["Voilà !", "Tout de suite !", "Bien sûr, monsieur."], distractors: ["Au revoir !", "Bonjour !", "Avec plaisir."] },
-    { prompt: "Bonne journée !", validReplies: ["Merci, vous aussi !", "Au revoir !", "À bientôt !"], distractors: ["Oui, s'il vous plaît.", "C'est combien ?", "Un café."] },
-    { prompt: "À bientôt !", validReplies: ["À bientôt !", "Au revoir !", "Bonne journée !"], distractors: ["Bonjour !", "Un café.", "C'est combien ?"] },
+    { prompt: "Bonjour !", promptEnglish: "Hello!",
+      validReplies: [{ text: "Bonjour !", english: "Hello!" }, { text: "Salut !", english: "Hi!" }, { text: "Bonsoir !", english: "Good evening!" }],
+      distractors: ["Merci.", "Au revoir.", "Non merci."] },
+    { prompt: "Comment allez-vous ?", promptEnglish: "How are you?",
+      validReplies: [{ text: "Très bien, merci !", english: "Very well, thank you!" }, { text: "Ça va bien.", english: "I'm doing well." }, { text: "Pas mal, merci.", english: "Not bad, thank you." }],
+      distractors: ["S'il vous plaît.", "Au revoir.", "Excusez-moi."] },
+    { prompt: "Qu'est-ce que vous désirez ?", promptEnglish: "What would you like?",
+      validReplies: [{ text: "Un café, s'il vous plaît.", english: "A coffee, please." }, { text: "Je voudrais un thé.", english: "I'd like a tea." }, { text: "Un croissant, merci.", english: "A croissant, thank you." }],
+      distractors: ["Bonsoir !", "C'est combien ?", "Très bien."] },
+    { prompt: "Avec du lait ?", promptEnglish: "With milk?",
+      validReplies: [{ text: "Oui, s'il vous plaît.", english: "Yes, please." }, { text: "Non, merci.", english: "No, thank you." }, { text: "Un peu, merci.", english: "A little, thank you." }],
+      distractors: ["Bonjour !", "C'est délicieux.", "Au revoir."] },
+    { prompt: "C'est combien ?", promptEnglish: "How much is it?",
+      validReplies: [{ text: "Voilà cinq euros.", english: "Here's five euros." }, { text: "Je peux payer par carte ?", english: "Can I pay by card?" }, { text: "Gardez la monnaie.", english: "Keep the change." }],
+      distractors: ["Bonjour !", "Avec du lait ?", "Non merci."] },
+    { prompt: "Excusez-moi !", promptEnglish: "Excuse me!",
+      validReplies: [{ text: "Oui ?", english: "Yes?" }, { text: "Je vous en prie.", english: "Not at all." }, { text: "Bien sûr !", english: "Of course!" }],
+      distractors: ["Bonjour !", "Au revoir.", "Un thé."] },
+    { prompt: "Où sont les toilettes ?", promptEnglish: "Where are the toilets?",
+      validReplies: [{ text: "Là-bas, à droite.", english: "Over there, on the right." }, { text: "Au fond, à gauche.", english: "At the back, on the left." }, { text: "Au premier étage.", english: "On the first floor." }],
+      distractors: ["Bonjour !", "Merci beaucoup.", "Un café."] },
+    { prompt: "C'est délicieux !", promptEnglish: "It's delicious!",
+      validReplies: [{ text: "Merci beaucoup !", english: "Thank you very much!" }, { text: "Je suis content !", english: "I'm glad!" }, { text: "C'est ma spécialité.", english: "It's my specialty." }],
+      distractors: ["L'addition !", "Excusez-moi.", "Au revoir."] },
+    { prompt: "Vous parlez anglais ?", promptEnglish: "Do you speak English?",
+      validReplies: [{ text: "Oui, un peu.", english: "Yes, a little." }, { text: "Non, désolé.", english: "No, sorry." }, { text: "Je préfère le français !", english: "I prefer French!" }],
+      distractors: ["Bonjour !", "C'est combien ?", "Au revoir."] },
+    { prompt: "L'addition, s'il vous plaît.", promptEnglish: "The bill, please.",
+      validReplies: [{ text: "Voilà !", english: "Here you go!" }, { text: "Tout de suite !", english: "Right away!" }, { text: "Bien sûr, monsieur.", english: "Of course, sir." }],
+      distractors: ["Au revoir !", "Bonjour !", "Avec plaisir."] },
+    { prompt: "Bonne journée !", promptEnglish: "Have a good day!",
+      validReplies: [{ text: "Merci, vous aussi !", english: "Thank you, you too!" }, { text: "Au revoir !", english: "Goodbye!" }, { text: "À bientôt !", english: "See you soon!" }],
+      distractors: ["Oui, s'il vous plaît.", "C'est combien ?", "Un café."] },
+    { prompt: "À bientôt !", promptEnglish: "See you soon!",
+      validReplies: [{ text: "À bientôt !", english: "See you soon!" }, { text: "Au revoir !", english: "Goodbye!" }, { text: "Bonne journée !", english: "Have a good day!" }],
+      distractors: ["Bonjour !", "Un café.", "C'est combien ?"] },
 ];
 
 // ============================================
@@ -455,7 +479,7 @@ const pauseBtn = document.getElementById('pause-btn');
 const skipRoundBtn = document.getElementById('skip-round-btn');
 const pauseOverlay = document.getElementById('pause-overlay');
 const speedSlider = null; // Removed
-const voiceSelect = null; // Removed - voice auto-alternates
+const voiceSelect = document.getElementById('voice-select');
 const voiceTestBtn = document.getElementById('voice-test-btn');
 const voiceStatusEl = null;
 const matchedCountEl = document.getElementById('matched-count');
@@ -486,6 +510,7 @@ const pongState = {
     phraseEl: null,
     missileEl: null,
     hintEl: null,
+    subtitleEl: null,
     replyEls: [],
     replies: [],
     phraseY: -100,
@@ -498,6 +523,10 @@ const pongState = {
     missileX: 0,
     missileY: 0,
     missileValid: false,
+    launchedText: null,
+    launchedTextEnglish: null,
+    loopCount: 0,
+    recapping: false,
 };
 
 function setupPongRound() {
@@ -516,6 +545,11 @@ function setupPongRound() {
 
     const phraseEl = document.createElement('div');
     phraseEl.className = 'pong-phrase';
+    phraseEl.style.cursor = 'pointer';
+    phraseEl.addEventListener('click', () => {
+        const conv = PONG_CONVERSATIONS[pongState.convIndex];
+        if (conv) speakFrench(conv.prompt);
+    });
     gameArea.appendChild(phraseEl);
     pongState.phraseEl = phraseEl;
 
@@ -533,7 +567,7 @@ function setupPongRound() {
 
     state.roundWords = PONG_CONVERSATIONS.map((c, i) => ({
         french: c.prompt,
-        english: c.validReplies[0],
+        english: c.validReplies[0].text,
         key: 'pong_' + i,
     }));
     state.matchedKeys.clear();
@@ -546,7 +580,7 @@ function setupPongRound() {
     const paddle = document.getElementById('paddle');
     state.paddleX = (gameArea.offsetWidth - 140) / 2;
     paddle.style.left = state.paddleX + 'px';
-    paddle.textContent = '\u2190 Space to load';
+    paddle.textContent = 'Space to load';
     state.paddleMoving = { left: false, right: false };
     document.getElementById('paddle-container').classList.add('show');
     document.getElementById('paddle-hint').classList.remove('show');
@@ -570,6 +604,9 @@ function loadPongConversation(index) {
     pongState.phraseEl.textContent = conv.prompt;
     pongState.phraseEl.classList.remove('correct-flash', 'wrong-flash');
     pongState.phraseY = -120;
+    pongState.loopCount = 0;
+    pongState.recapping = false;
+    if (pongState.subtitleEl) { pongState.subtitleEl.remove(); pongState.subtitleEl = null; }
 
     speakFrench(conv.prompt);
 
@@ -577,8 +614,8 @@ function loadPongConversation(index) {
     const numDistract = 6 - validPick.length;
     const distractPick = [...conv.distractors].sort(() => Math.random() - 0.5).slice(0, numDistract);
     const allReplies = [
-        ...validPick.map(t => ({ text: t, valid: true })),
-        ...distractPick.map(t => ({ text: t, valid: false })),
+        ...validPick.map(t => ({ text: t.text, english: t.english, valid: true })),
+        ...distractPick.map(t => ({ text: t, english: null, valid: false })),
     ].sort(() => Math.random() - 0.5);
 
     for (const el of pongState.replyEls) el.remove();
@@ -596,17 +633,19 @@ function loadPongConversation(index) {
         el.textContent = reply.text;
         el.style.top = replyY + 'px';
         el.style.left = '-999px';
+        el.style.cursor = 'pointer';
+        el.addEventListener('click', () => speakFrench(reply.text));
         gameArea.appendChild(el);
         const slotCX = slotWidth * i + slotWidth / 2;
         requestAnimationFrame(() => {
             el.style.left = (slotCX - el.offsetWidth / 2) + 'px';
         });
         pongState.replyEls.push(el);
-        pongState.replies.push({ text: reply.text, valid: reply.valid, slotCX });
+        pongState.replies.push({ text: reply.text, english: reply.english, valid: reply.valid, slotCX });
     });
 
     const paddle = document.getElementById('paddle');
-    paddle.textContent = '\u2190 Space to load';
+    paddle.textContent = 'Space to load';
     document.getElementById('paddle-container').classList.remove('pong-loaded');
 }
 
@@ -645,19 +684,36 @@ function updatePongMode(deltaTime) {
         pongState.activeIdx = newActive;
     }
 
-    // Move phrase bubble down
-    pongState.phraseY += pongState.speed * deltaTime;
+    // Move phrase bubble down (freeze during recap)
+    if (!pongState.recapping) {
+        pongState.phraseY += pongState.speed * deltaTime;
+    }
     const phraseW = pongState.phraseEl.offsetWidth || 200;
     const phraseH = pongState.phraseEl.offsetHeight || 60;
     const phraseCX = areaWidth / 2;
     pongState.phraseEl.style.left = (phraseCX - phraseW / 2) + 'px';
     pongState.phraseEl.style.top = pongState.phraseY + 'px';
 
+    // Keep subtitle just below phrase (horizontal centering handled by CSS)
+    if (pongState.subtitleEl) {
+        pongState.subtitleEl.style.top = (pongState.phraseY + phraseH + 6) + 'px';
+    }
+
     // Reset phrase to top when it reaches reply row
     const replyRowTop = areaHeight - 54 - 72 - 50;
-    if (pongState.phraseY > replyRowTop) {
+    if (!pongState.recapping && pongState.phraseY > replyRowTop) {
         pongState.phraseY = -phraseH - 20;
+        pongState.loopCount++;
         speakFrench(PONG_CONVERSATIONS[pongState.convIndex].prompt);
+        // Show English subtitle after first unanswered loop
+        if (pongState.loopCount >= 1 && !pongState.subtitleEl) {
+            const conv = PONG_CONVERSATIONS[pongState.convIndex];
+            const sub = document.createElement('div');
+            sub.className = 'pong-subtitle';
+            sub.textContent = conv.promptEnglish || '';
+            gameArea.appendChild(sub);
+            pongState.subtitleEl = sub;
+        }
     }
 
     // Move missile upward
@@ -677,9 +733,21 @@ function updatePongMode(deltaTime) {
             pongState.missileActive = false;
 
             if (pongState.missileValid) {
-                speakFrench(PONG_CONVERSATIONS[pongState.convIndex].prompt);
+                speakFrench(pongState.launchedText);
+                pongState.recapping = true;
+                pongState.phraseEl.textContent = '✓ ' + pongState.launchedText;
                 pongState.phraseEl.classList.add('correct-flash');
                 setTimeout(() => pongState.phraseEl.classList.remove('correct-flash'), 600);
+
+                // Show full exchange in English during recap
+                if (pongState.subtitleEl) { pongState.subtitleEl.remove(); pongState.subtitleEl = null; }
+                const conv = PONG_CONVERSATIONS[pongState.convIndex];
+                const sub = document.createElement('div');
+                sub.className = 'pong-subtitle';
+                sub.innerHTML = (conv.promptEnglish || '') +
+                    (pongState.launchedTextEnglish ? '<br>\u2192 ' + pongState.launchedTextEnglish : '');
+                gameArea.appendChild(sub);
+                pongState.subtitleEl = sub;
 
                 state.matchedKeys.add('pong_' + pongState.convIndex);
                 state.matchedSteps++;
@@ -690,14 +758,14 @@ function updatePongMode(deltaTime) {
 
                 checkRoundComplete();
                 if (state.matchedSteps < state.roundWords.length) {
-                    setTimeout(() => loadPongConversation(pongState.convIndex + 1), 900);
+                    setTimeout(() => loadPongConversation(pongState.convIndex + 1), 1500);
                 }
             } else {
                 // Wrong
                 pongState.phraseEl.classList.add('wrong-flash');
                 setTimeout(() => pongState.phraseEl.classList.remove('wrong-flash'), 600);
                 pongState.loadedIdx = -1;
-                paddle.textContent = '\u2190 Space to load';
+                paddle.textContent = 'Space to load';
                 document.getElementById('paddle-container').classList.remove('pong-loaded');
             }
         }
@@ -707,7 +775,7 @@ function updatePongMode(deltaTime) {
             pongState.missileEl.style.display = 'none';
             pongState.missileActive = false;
             pongState.loadedIdx = -1;
-            paddle.textContent = '\u2190 Space to load';
+            paddle.textContent = 'Space to load';
             document.getElementById('paddle-container').classList.remove('pong-loaded');
         }
     }
@@ -748,6 +816,8 @@ function launchPongMissile() {
     pongState.missileEl.style.top = pongState.missileY + 'px';
     pongState.missileActive = true;
     pongState.missileValid = reply.valid;
+    pongState.launchedText = reply.text;
+    pongState.launchedTextEnglish = reply.english;
 
     if (pongState.replyEls[pongState.loadedIdx]) {
         pongState.replyEls[pongState.loadedIdx].classList.remove('loaded-dim');
@@ -755,7 +825,7 @@ function launchPongMissile() {
     pongState.loadedIdx = -1;
 
     const paddle = document.getElementById('paddle');
-    paddle.textContent = '\u2190 Space to load';
+    paddle.textContent = 'Space to load';
     document.getElementById('paddle-container').classList.remove('pong-loaded');
 }
 
@@ -763,12 +833,17 @@ function cleanupPongMode() {
     if (pongState.phraseEl) { pongState.phraseEl.remove(); pongState.phraseEl = null; }
     if (pongState.missileEl) { pongState.missileEl.remove(); pongState.missileEl = null; }
     if (pongState.hintEl) { pongState.hintEl.remove(); pongState.hintEl = null; }
+    if (pongState.subtitleEl) { pongState.subtitleEl.remove(); pongState.subtitleEl = null; }
     for (const el of pongState.replyEls) if (el.parentNode) el.remove();
     pongState.replyEls = [];
     pongState.replies = [];
     pongState.missileActive = false;
     pongState.loadedIdx = -1;
     pongState.activeIdx = -1;
+    pongState.loopCount = 0;
+    pongState.recapping = false;
+    pongState.launchedText = null;
+    pongState.launchedTextEnglish = null;
 }
 
 // ============================================
@@ -844,8 +919,7 @@ function startGame() {
             }
         }
 
-        // Show "Match the Pairs" for at least 3 seconds, then start game
-        setTimeout(() => {
+        runCountdown(() => {
             validationOverlay.classList.remove('show');
 
             resetRoundTimer();
@@ -857,7 +931,7 @@ function startGame() {
 
             // Start spawning
             startSpawning();
-        }, 3000);
+        });
     }, 5000);
     
     // Event listeners
@@ -910,6 +984,13 @@ handleCardClick(id);
                     window.speechSynthesis.speak(u);
                 }
             } catch (e) {}
+        });
+    }
+
+    if (voiceSelect) {
+        voiceSelect.addEventListener('change', () => {
+            cachedFrenchVoice = resolveSelectedVoice();
+            saveVoiceSettings();
         });
     }
 
@@ -1495,7 +1576,7 @@ function startNextRound() {
             console.error('Round 5 setup failed:', e);
         }
         
-        setTimeout(() => {
+        runCountdown(() => {
             console.log('R5: Title timeout fired, starting spawning. roundWords:', state.roundWords.length, 'listenMode:', state.listenMode);
             console.log('R5: gameArea dimensions:', gameArea.offsetWidth, 'x', gameArea.offsetHeight);
             console.log('R5: gameLoop active:', !!gameLoop);
@@ -1503,72 +1584,59 @@ function startNextRound() {
             resetRoundTimer();
             startRoundTimer();
             startSpawning();
-            // Check after first spawn cycle
             setTimeout(() => {
                 console.log('R5: After 1s - cards in state:', state.cards.length, 'DOM cards:', gameArea.querySelectorAll('.card').length);
                 console.log('R5: activePairs:', state.activePairs.size, 'listenSpawnIndex:', state.listenSpawnIndex);
             }, 1000);
-        }, 3000);
+        });
     } else if (isPongRound) {
         roundTitleOverlay.classList.add('show');
         roundTitleText.textContent = `Round ${frenchRoundNumber(state.currentRound)} - Conversation Pong`;
         roundTitleInstructions.innerHTML = '\u2190 \u2192 move paddle \u00b7 Space to load a reply \u00b7 Space again to launch!<br><br><span style="color:#1a5c2a;font-weight:600;">\u2705 Multiple correct replies \u00b7 Speed increases with each match!</span>';
         setupRound();
-        setTimeout(() => {
+        runCountdown(() => {
             roundTitleOverlay.classList.remove('show');
             resetRoundTimer();
             startRoundTimer();
             // No spawning needed - pong handles its own loop
-        }, 3000);
+        });
     } else if (isCoffeeShopRound) {
         // Show special instructions for coffee shop round
         roundTitleOverlay.classList.add('show');
         roundTitleText.textContent = `Round ${frenchRoundNumber(state.currentRound)} - Au Café`;
         roundTitleInstructions.textContent = 'Match café items to their French names!';
-        
-        // Setup round while showing title
         setupRound();
-        
-        // After 3 seconds, start the round
-        setTimeout(() => {
+        runCountdown(() => {
             roundTitleOverlay.classList.remove('show');
             resetRoundTimer();
             startRoundTimer();
             startSpawning();
-        }, 3000);
+        });
     } else if (isShooterRound) {
         // Show special instructions for shooter mode
         roundTitleOverlay.classList.add('show');
         roundTitleText.textContent = `Round ${frenchRoundNumber(state.currentRound)} - Breakout!`;
         roundTitleInstructions.innerHTML = '← → move paddle · Catch the matching emojis!<br><br><span style="color:#d32f2f;font-weight:600;">⚠️ Caution: Hitting the wrong word increases the speed of the emoji!</span>';
         
-        // Setup round while showing title
         setupRound();
-        
-        // After 3 seconds, start the round
-        setTimeout(() => {
+        runCountdown(() => {
             roundTitleOverlay.classList.remove('show');
             resetRoundTimer();
             startRoundTimer();
             startSpawning();
-        }, 3000);
+        });
     } else {
-        // Show "Match the Pairs" for normal rounds
         validationOverlay.classList.add('show');
         validationText.textContent = 'Match the Pairs';
         validationSubtitle.style.display = 'none';
         validationStatus.textContent = '';
-        
-        // Setup round
         const isValid = setupRound();
-        
-        // After 3 seconds, start the round
-        setTimeout(() => {
+        runCountdown(() => {
             validationOverlay.classList.remove('show');
             resetRoundTimer();
             startRoundTimer();
             startSpawning();
-        }, 3000);
+        });
     }
 }
 
@@ -1625,7 +1693,7 @@ function skipRound() {
             console.error('Round 5 (skip) setup failed:', e);
         }
         
-        setTimeout(() => {
+        runCountdown(() => {
             console.log('R5 (skip): Title timeout fired, starting spawning. roundWords:', state.roundWords.length, 'listenMode:', state.listenMode);
             console.log('R5 (skip): gameArea dimensions:', gameArea.offsetWidth, 'x', gameArea.offsetHeight);
             console.log('R5 (skip): gameLoop active:', !!gameLoop);
@@ -1636,17 +1704,17 @@ function skipRound() {
             setTimeout(() => {
                 console.log('R5 (skip): After 1s - cards in state:', state.cards.length, 'DOM cards:', gameArea.querySelectorAll('.card').length);
             }, 1000);
-        }, 3000);
+        });
     } else if (isPongRound2) {
         roundTitleOverlay.classList.add('show');
         roundTitleText.textContent = `Round ${frenchRoundNumber(state.currentRound)} - Conversation Pong`;
         roundTitleInstructions.innerHTML = '\u2190 \u2192 move paddle \u00b7 Space to load a reply \u00b7 Space again to launch!<br><br><span style="color:#1a5c2a;font-weight:600;">\u2705 Multiple correct replies \u00b7 Speed increases with each match!</span>';
         setupRound();
-        setTimeout(() => {
+        runCountdown(() => {
             roundTitleOverlay.classList.remove('show');
             resetRoundTimer();
             startRoundTimer();
-        }, 3000);
+        });
     } else if (isCoffeeShopRound2) {
         // Show special instructions for coffee shop round
         roundTitleOverlay.classList.add('show');
@@ -1657,45 +1725,37 @@ function skipRound() {
         setupRound();
         
         // After 3 seconds, start the round
-        setTimeout(() => {
+        runCountdown(() => {
             roundTitleOverlay.classList.remove('show');
             resetRoundTimer();
             startRoundTimer();
             startSpawning();
-        }, 3000);
+        });
     } else if (isShooterRound2) {
         // Show special instructions for shooter mode
         roundTitleOverlay.classList.add('show');
         roundTitleText.textContent = `Round ${frenchRoundNumber(state.currentRound)} - Breakout!`;
         roundTitleInstructions.innerHTML = '← → move paddle · Catch the matching emojis!<br><br><span style="color:#d32f2f;font-weight:600;">⚠️ Caution: Hitting the wrong word increases the speed of the emoji!</span>';
         
-        // Setup round while showing title
         setupRound();
-        
-        // After 3 seconds, start the round
-        setTimeout(() => {
+        runCountdown(() => {
             roundTitleOverlay.classList.remove('show');
             resetRoundTimer();
             startRoundTimer();
             startSpawning();
-        }, 3000);
+        });
     } else {
-        // Show "Match the Pairs" for normal rounds
         validationOverlay.classList.add('show');
         validationText.textContent = 'Match the Pairs';
         validationSubtitle.style.display = 'none';
         validationStatus.textContent = '';
-        
-        // Setup round
         setupRound();
-        
-        // After 3 seconds, start the round
-        setTimeout(() => {
+        runCountdown(() => {
             validationOverlay.classList.remove('show');
             resetRoundTimer();
             startRoundTimer();
             startSpawning();
-        }, 3000);
+        });
     }
 }
 
@@ -1848,13 +1908,19 @@ function populateVoiceSelect() {
 function resolveSelectedVoice() {
     const voices = voiceListCache.length ? voiceListCache : getAllVoices();
     const frVoices = voices.filter(v => (v.lang || '').toLowerCase().startsWith('fr'));
-    
-    // Amelie for odd rounds (1,3,5...), Thomas for even (2,4,6...)
+
+    // If a specific voice is manually selected, use it
+    const manualVal = voiceSelect ? voiceSelect.value : 'auto';
+    if (manualVal && manualVal !== 'auto') {
+        const manual = voices.find(v => (v.voiceURI || v.name) === manualVal);
+        if (manual) return manual;
+    }
+
+    // Auto: Amelie for odd rounds (1,3,5...), Thomas for even (2,4,6...)
     const wantAmelie = (state.currentRound % 2) === 1;
     const targetName = wantAmelie ? 'amelie' : 'thomas';
     const altName = wantAmelie ? 'thomas' : 'amelie';
-    
-    // Try to find target voice
+
     let voice = frVoices.find(v => (v.name || '').toLowerCase().includes(targetName));
     if (!voice) voice = frVoices.find(v => (v.name || '').toLowerCase().includes(altName));
     if (!voice) voice = pickBestFrenchVoice(voices);
@@ -3411,7 +3477,7 @@ function handleKeydown(e) {
             return;
         } else if (e.key === ' ') {
             e.preventDefault();
-            assignNewPaddleWord();
+            assignNewPaddleWord(e.shiftKey ? -1 : 1);
             return;
         }
     }
@@ -3423,12 +3489,16 @@ function handleKeydown(e) {
         e.preventDefault();
         togglePause();
     } else if (e.key === 'Escape') {
-        if (state.selectedCard) {
-            state.selectedCard.frozen = false;
-            state.selectedCard.element.classList.remove('selected');
-            state.selectedCard = null;
+        if (state.selectedCard || state.typingTarget) {
+            if (state.selectedCard) {
+                state.selectedCard.frozen = false;
+                state.selectedCard.element.classList.remove('selected');
+                state.selectedCard = null;
+            }
+            state.typingTarget = null;
+        } else {
+            togglePause();
         }
-        state.typingTarget = null;
     } else if (state.typingMode && state.typingTarget) {
         const numKey = parseInt(e.key);
         if (!isNaN(numKey) && numKey >= 0 && numKey <= 9) {
@@ -3522,13 +3592,11 @@ function updatePaddleMode(deltaTime) {
         
         const s = em.size;
         
-        em.x += em.vx * deltaTime;
-        em.y += em.vy * deltaTime;
-        
         // Speed boost multiplier (50% faster for 2s after paddle hit)
         const now = performance.now();
-        const boosted = em.boostUntil > now;
-        const boostMul = boosted ? 1.5 : 1.0;
+        const boostFactor = em.boostUntil > now ? 1.5 : 1.0;
+        em.x += em.vx * deltaTime * boostFactor;
+        em.y += em.vy * deltaTime * boostFactor;
         
         // Wall bounces — gain 10% speed when < 10 emojis alive
         const aliveCount = state.bounceEmojis.filter(e => e.alive).length;
@@ -3541,12 +3609,6 @@ function updatePaddleMode(deltaTime) {
         if (em.y > areaHeight + s) {
             em.y = -s;
             em.x = 20 + Math.random() * (areaWidth - s - 40);
-        }
-        
-        // Apply boost to movement
-        if (boosted) {
-            em.x += em.vx * deltaTime * 0.5; // extra 50% movement
-            em.y += em.vy * deltaTime * 0.5;
         }
         
         // Paddle collision — only when moving downward
@@ -3644,10 +3706,11 @@ function updatePaddleMode(deltaTime) {
                 const dot = dvx * nx + dvy * ny;
                 
                 if (dot > 0) {
-                    em.vx -= dot * nx * 0.875;
-                    em.vy -= dot * ny * 0.875;
-                    other.vx += dot * nx * 0.875;
-                    other.vy += dot * ny * 0.875;
+                    const impulse = Math.max(dot, 1.0);
+                    em.vx -= impulse * nx;
+                    em.vy -= impulse * ny;
+                    other.vx += impulse * nx;
+                    other.vy += impulse * ny;
                 }
             }
         }
@@ -3717,32 +3780,41 @@ function handleComboFeedback(correct, wordData) {
     }
 }
 
-function assignNewPaddleWord() {
+function assignNewPaddleWord(direction = 1) {
     const paddle = document.getElementById('paddle');
-    // Prefer words that still have live emojis on screen
-    const liveKeys = state.bounceEmojis
-        .filter(e => e.alive)
-        .map(e => normalizeFrench(e.wordData.french));
-    const uniqueLive = [...new Set(liveKeys)];
-    const unmatched = uniqueLive.filter(k => !state.matchedKeys.has(k));
-    
-    if (unmatched.length > 0) {
-        const pick = unmatched[Math.floor(Math.random() * unmatched.length)];
-        const wd = state.bounceEmojis.find(e => e.alive && normalizeFrench(e.wordData.french) === pick)?.wordData;
-        if (wd) {
-            state.paddleWord = wd;
-            paddle.textContent = wd.french;
-            return;
-        }
-    }
-    // Fallback: any remaining unmatched word
-    const remaining = state.roundWords.filter(w => !state.matchedKeys.has(normalizeFrench(w.french)));
-    if (remaining.length > 0) {
-        state.paddleWord = remaining[Math.floor(Math.random() * remaining.length)];
-        paddle.textContent = state.paddleWord.french;
-    } else {
+    // Build ordered list: live unmatched words first, then the rest
+    const liveKeys = [...new Set(
+        state.bounceEmojis.filter(e => e.alive).map(e => normalizeFrench(e.wordData.french))
+    )].filter(k => !state.matchedKeys.has(k));
+
+    const remainingKeys = state.roundWords
+        .map(w => normalizeFrench(w.french))
+        .filter(k => !state.matchedKeys.has(k) && !liveKeys.includes(k));
+
+    const orderedKeys = [...liveKeys, ...remainingKeys];
+
+    if (orderedKeys.length === 0) {
         state.paddleWord = null;
         paddle.textContent = '\u2713';
+        return;
+    }
+
+    const currentKey = state.paddleWord ? normalizeFrench(state.paddleWord.french) : null;
+    let currentIdx = orderedKeys.indexOf(currentKey);
+
+    if (currentIdx === -1) {
+        currentIdx = direction >= 0 ? 0 : orderedKeys.length - 1;
+    } else {
+        currentIdx = (currentIdx + direction + orderedKeys.length) % orderedKeys.length;
+    }
+
+    const targetKey = orderedKeys[currentIdx];
+    const wd = state.bounceEmojis.find(e => e.alive && normalizeFrench(e.wordData.french) === targetKey)?.wordData
+        || state.roundWords.find(w => normalizeFrench(w.french) === targetKey);
+
+    if (wd) {
+        state.paddleWord = wd;
+        paddle.textContent = wd.french;
     }
 }
 
@@ -3802,6 +3874,36 @@ function togglePause() {
     state.paused = !state.paused;
     pauseOverlay.classList.toggle('show', state.paused);
     pauseBtn.textContent = state.paused ? 'Resume' : 'Pause';
+}
+
+function runCountdown(callback) {
+    const el = document.getElementById('round-countdown');
+    if (!el) { setTimeout(callback, 3000); return; }
+    const steps = ['3', '2', '1'];
+    let i = 0;
+    el.textContent = steps[0];
+    el.classList.add('show');
+    // Restart CSS animation on each tick by cloning the element
+    const tick = setInterval(() => {
+        i++;
+        if (i < steps.length) {
+            el.textContent = steps[i];
+            // Re-trigger pop animation
+            el.classList.remove('show');
+            void el.offsetWidth;
+            el.classList.add('show');
+        } else {
+            el.textContent = 'GO!';
+            el.classList.remove('show');
+            void el.offsetWidth;
+            el.classList.add('show');
+            clearInterval(tick);
+            setTimeout(() => {
+                el.classList.remove('show');
+                callback();
+            }, 400);
+        }
+    }, 1000);
 }
 
 // ============================================
