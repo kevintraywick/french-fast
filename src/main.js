@@ -591,11 +591,11 @@ function setupPongRound() {
     document.getElementById('paddle-container').classList.add('show');
     document.getElementById('paddle-hint').classList.remove('show');
 
-    setTimeout(() => loadPongConversation(0), 100);
+    setTimeout(() => loadPongConversation(0, false), 100);
     return true;
 }
 
-function loadPongConversation(index) {
+function loadPongConversation(index, speak = true) {
     if (index >= PONG_CONVERSATIONS.length) {
         checkRoundComplete();
         return;
@@ -614,7 +614,7 @@ function loadPongConversation(index) {
     pongState.recapping = false;
     if (pongState.subtitleEl) { pongState.subtitleEl.remove(); pongState.subtitleEl = null; }
 
-    speakFrench(conv.prompt);
+    if (speak) speakFrench(conv.prompt);
 
     const validPick = [...conv.validReplies].sort(() => Math.random() - 0.5).slice(0, 3);
     const numDistract = 6 - validPick.length;
