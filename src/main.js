@@ -391,6 +391,7 @@ const state = {
     
     // Paddle system
     paddleX: 0,
+    paddleVx: 0,
     paddleWord: null,
     paddleMoving: { left: false, right: false },
     bounceEmojis: [],
@@ -583,6 +584,7 @@ function setupPongRound() {
 
     const paddle = document.getElementById('paddle');
     state.paddleX = (gameArea.offsetWidth - 140) / 2;
+    state.paddleVx = 0;
     paddle.style.left = state.paddleX + 'px';
     paddle.textContent = 'Space to load';
     state.paddleMoving = { left: false, right: false };
@@ -1159,6 +1161,7 @@ state.paddleWord = state.roundWords[0];
 const paddle = document.getElementById('paddle');
 paddle.textContent = state.paddleWord.french;
 state.paddleX = (gameArea.offsetWidth - 140) / 2;
+    state.paddleVx = 0;
 paddle.style.left = state.paddleX + 'px';
 
 console.log(`Round ${state.currentRound} - Breakout: ${state.roundWords.length} emojis`);
@@ -3614,11 +3617,17 @@ function updatePaddleMode(deltaTime) {
     const paddleY = areaHeight - paddleHeight - 12;
     const paddle = document.getElementById('paddle');
     
-    // Move paddle smoothly
-    const pSpeed = 11.52 * deltaTime;
-    if (state.paddleMoving.left) state.paddleX -= pSpeed;
-    if (state.paddleMoving.right) state.paddleX += pSpeed;
+    // Move paddle with drift — accelerate toward target, coast on release
+    const maxPSpeed = 11.52;
+    const targetVx = state.paddleMoving.left ? -maxPSpeed : state.paddleMoving.right ? maxPSpeed : 0;
+    if (targetVx !== 0) {
+        state.paddleVx += (targetVx - state.paddleVx) * 0.3 * deltaTime;
+    } else {
+        state.paddleVx *= Math.pow(0.78, deltaTime);
+    }
+    state.paddleX += state.paddleVx * deltaTime;
     state.paddleX = Math.max(0, Math.min(areaWidth - paddleWidth, state.paddleX));
+    if (state.paddleX <= 0 || state.paddleX >= areaWidth - paddleWidth) state.paddleVx = 0;
     paddle.style.left = state.paddleX + 'px';
     
     const paddleCX = state.paddleX + paddleWidth / 2;
