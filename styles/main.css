@@ -46,6 +46,9 @@ body {
     margin-left: auto;
 }
 
+#theme-toggle-btn { margin-left: 8px; }
+#pause-btn { margin-left: 8px; }
+
 /* Subtle dividers between left cluster items */
 .top-bar-left > * {
     padding: 0 12px;
@@ -84,12 +87,13 @@ body {
 
 #round-label {
     display: inline-block;
-    min-width: 200px;
+    width: 270px;
     text-align: center;
     font-size: 15px;
     font-weight: 600;
     color: #222;
-    padding: 0 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 #round-theme {
