@@ -429,7 +429,10 @@ const state = {
 
     // Spaced repetition progress, keyed by normalized french
     // Structure: { [key]: { timesCorrect, lastSeen, learned } }
-    wordProgress: {}
+    wordProgress: {},
+
+    // Wrong match counts per pair key (reset each round)
+    wrongCounts: {}
 };
 
 // ============================================
@@ -571,6 +574,7 @@ function setupPongRound() {
         key: 'pong_' + i,
     }));
     state.matchedKeys.clear();
+    state.wrongCounts = {};
     state.matchedSteps = 0;
 
     roundNumberEl.textContent = frenchRoundNumber(state.currentRound);
@@ -907,6 +911,7 @@ function startGame() {
                 }));
                 state.roundChallenges = [];
                 state.matchedKeys.clear();
+    state.wrongCounts = {};
                 state.matchedSteps = 0;
                 state.activePairs.clear();
                 roundNumberEl.textContent = frenchRoundNumber(state.currentRound || 1);
@@ -1301,6 +1306,7 @@ return state.roundWords.length > 0;
 
         state.roundChallenges = [];
         state.matchedKeys.clear();
+    state.wrongCounts = {};
         state.matchedSteps = 0;
         state.activePairs.clear();
         state.multiStep = null;
@@ -1360,6 +1366,7 @@ key: normalizeFrench(w.french)
     }));
 
     state.matchedKeys.clear();
+    state.wrongCounts = {};
     state.matchedSteps = 0;
     state.spawnedEmojiIndices = [];
     state.spawnedWordIndices = [];
@@ -3017,7 +3024,8 @@ if (card.type === 'english') {
     if (card.pairKey === state.selectedCard.pairKey) {
         // Correct match!
         speakFrench(card.wordData.french);
-        
+        showTranslationToast(card.wordData);
+
         const frenchCard = state.selectedCard;
         
         frenchCard.element.classList.remove('selected');
@@ -3311,6 +3319,7 @@ state.learnedCount += 1;
     updateProgressDisplay();
 
     speakFrench(displayFrench);
+    showTranslationToast(card1.wordData || card2.wordData);
 
     // Track matched
     state.matchedKeys.add(key);
@@ -3404,32 +3413,61 @@ console.warn('Congratulations speech failed:', e);
 }
 
 
+function showTranslationToast(wordData) {
+    if (!wordData?.english) return;
+    const el = document.createElement('div');
+    el.className = 'translation-toast';
+    const prefix = wordData.emoji ? wordData.emoji + ' ' : '';
+    el.textContent = `${prefix}${wordData.french} = ${wordData.english}`;
+    gameArea.appendChild(el);
+    setTimeout(() => el.classList.add('fade-out'), 1400);
+    setTimeout(() => { if (el.parentNode) el.remove(); }, 1900);
+}
+
+function showEnglishHint(emojiCard) {
+    if (!emojiCard?.wordData?.english) return;
+    if (emojiCard.element.querySelector('.english-hint')) return;
+    const hint = document.createElement('div');
+    hint.className = 'english-hint';
+    hint.textContent = emojiCard.wordData.english;
+    emojiCard.element.appendChild(hint);
+}
+
 function handleWrongMatch(card1, card2) {
     // Flash red
     card1.element.classList.add('incorrect');
     card2.element.classList.add('incorrect');
-    
+
     // Find the emoji card and show the French word
     const emojiCard = card1.type === 'emoji' ? card1 : card2;
+    const pairKey = emojiCard.pairKey || normalizeFrench(emojiCard.wordData?.french);
     const originalContent = emojiCard.element.textContent;
-    
+
     // Show the correct French word on the emoji
     emojiCard.element.textContent = emojiCard.wordData.french;
     emojiCard.element.classList.add('show-word');
-    
+
+    // Track wrong count; reveal English hint on 3rd miss
+    state.wrongCounts[pairKey] = (state.wrongCounts[pairKey] || 0) + 1;
+    if (state.wrongCounts[pairKey] >= 3) {
+        showEnglishHint(emojiCard);
+    }
+
     setTimeout(() => {
         card1.element.classList.remove('selected', 'incorrect');
         card2.element.classList.remove('selected', 'incorrect');
-        
-        // Restore emoji
+
+        // Restore emoji (re-attach hint if it was added)
+        const existingHint = emojiCard.element.querySelector('.english-hint');
         emojiCard.element.textContent = originalContent;
+        if (existingHint) emojiCard.element.appendChild(existingHint);
         emojiCard.element.classList.remove('show-word');
-        
+
         // Unfreeze both cards
         card1.frozen = false;
         card2.frozen = false;
     }, 1000);
-    
+
     state.selectedCard = null;
 }
 
