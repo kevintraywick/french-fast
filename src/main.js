@@ -515,6 +515,7 @@ const pongState = {
     missileEl: null,
     hintEl: null,
     subtitleEl: null,
+    phraseX: 0,
     replyEls: [],
     replies: [],
     phraseY: -100,
@@ -610,6 +611,7 @@ function loadPongConversation(index) {
     pongState.phraseEl.textContent = conv.prompt;
     pongState.phraseEl.classList.remove('correct-flash', 'wrong-flash');
     pongState.phraseY = -120;
+    pongState.phraseX = 30 + Math.random() * (gameArea.offsetWidth - 260);
     pongState.loopCount = 0;
     pongState.recapping = false;
     if (pongState.subtitleEl) { pongState.subtitleEl.remove(); pongState.subtitleEl = null; }
@@ -664,10 +666,16 @@ function updatePongMode(deltaTime) {
     const paddleHeight = 42;
     const paddle = document.getElementById('paddle');
 
-    const pSpeed = 8 * deltaTime;
-    if (state.paddleMoving.left) state.paddleX -= pSpeed;
-    if (state.paddleMoving.right) state.paddleX += pSpeed;
+    const maxPSpeed = 11.52;
+    const targetPVx = state.paddleMoving.left ? -maxPSpeed : state.paddleMoving.right ? maxPSpeed : 0;
+    if (targetPVx !== 0) {
+        state.paddleVx += (targetPVx - state.paddleVx) * 0.3 * deltaTime;
+    } else {
+        state.paddleVx *= Math.pow(0.78, deltaTime);
+    }
+    state.paddleX += state.paddleVx * deltaTime;
     state.paddleX = Math.max(0, Math.min(areaWidth - paddleWidth, state.paddleX));
+    if (state.paddleX <= 0 || state.paddleX >= areaWidth - paddleWidth) state.paddleVx = 0;
     paddle.style.left = state.paddleX + 'px';
 
     const paddleCX = state.paddleX + paddleWidth / 2;
@@ -696,8 +704,8 @@ function updatePongMode(deltaTime) {
     }
     const phraseW = pongState.phraseEl.offsetWidth || 200;
     const phraseH = pongState.phraseEl.offsetHeight || 60;
-    const phraseCX = areaWidth / 2;
-    pongState.phraseEl.style.left = (phraseCX - phraseW / 2) + 'px';
+    const phraseCX = pongState.phraseX + phraseW / 2;
+    pongState.phraseEl.style.left = pongState.phraseX + 'px';
     pongState.phraseEl.style.top = pongState.phraseY + 'px';
 
     // Keep subtitle just below phrase (horizontal centering handled by CSS)
@@ -709,6 +717,7 @@ function updatePongMode(deltaTime) {
     const replyRowTop = areaHeight - 54 - 72 - 50;
     if (!pongState.recapping && pongState.phraseY > replyRowTop) {
         pongState.phraseY = -phraseH - 20;
+        pongState.phraseX = 30 + Math.random() * (areaWidth - 260);
         pongState.loopCount++;
         speakFrench(PONG_CONVERSATIONS[pongState.convIndex].prompt);
         // Show English subtitle after first unanswered loop
@@ -724,7 +733,7 @@ function updatePongMode(deltaTime) {
 
     // Move missile upward
     if (pongState.missileActive && pongState.missileEl) {
-        pongState.missileY -= 10 * deltaTime;
+        pongState.missileY -= 14 * deltaTime;
         pongState.missileEl.style.top = pongState.missileY + 'px';
 
         const mW = pongState.missileEl.offsetWidth || 100;
@@ -764,7 +773,7 @@ function updatePongMode(deltaTime) {
 
                 checkRoundComplete();
                 if (state.matchedSteps < state.roundWords.length) {
-                    setTimeout(() => loadPongConversation(pongState.convIndex + 1), 1500);
+                    setTimeout(() => loadPongConversation(pongState.convIndex + 1), 2500);
                 }
             } else {
                 // Wrong
