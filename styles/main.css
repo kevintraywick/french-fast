@@ -159,6 +159,7 @@ body.dark-mode #breakout-score { text-shadow: 0 2px 6px rgba(0,0,0,0.5); }
     background: #e0e0e0;
 }
 
+#prev-round-btn,
 #skip-round-btn {
     padding: 4px 8px;
     font-size: 14px;
@@ -170,6 +171,7 @@ body.dark-mode #breakout-score { text-shadow: 0 2px 6px rgba(0,0,0,0.5); }
     vertical-align: middle;
 }
 
+#prev-round-btn:hover,
 #skip-round-btn:hover {
     background: #e0e0e0;
 }
@@ -1146,6 +1148,7 @@ body.dark-mode #round-timer {
     color: #c8c8e0;
 }
 body.dark-mode #pause-btn,
+body.dark-mode #prev-round-btn,
 body.dark-mode #skip-round-btn,
 body.dark-mode #theme-toggle-btn {
     background: #2a2a4a;
@@ -1153,6 +1156,7 @@ body.dark-mode #theme-toggle-btn {
     color: #c8c8e0;
 }
 body.dark-mode #pause-btn:hover,
+body.dark-mode #prev-round-btn:hover,
 body.dark-mode #skip-round-btn:hover,
 body.dark-mode #theme-toggle-btn:hover {
     background: #3a3a5a;

@@ -325,8 +325,7 @@ const FRENCH_NUMBERS = [
 ];
 
 function frenchRoundNumber(n) {
-    if (n <= 3) return String(n);
-    if (n >= 4 && n <= 20) return FRENCH_NUMBERS[n];
+    if (n >= 1 && n <= 20) return FRENCH_NUMBERS[n];
     return String(n);
 }
 
@@ -1403,8 +1402,10 @@ key: normalizeFrench(w.french)
     state.activePairs.clear();
     state.multiStep = null;
 
+    if (state.currentRound === 1) state.roundTheme = 'Les Mots';
+    else if (state.currentRound === 2) state.roundTheme = 'La Mémoire';
     roundNumberEl.textContent = frenchRoundNumber(state.currentRound);
-    roundThemeEl.textContent = '';
+    roundThemeEl.textContent = state.roundTheme ? ` - ${state.roundTheme}` : '';
     updateCardCount();
 
     
