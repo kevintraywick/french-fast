@@ -611,7 +611,6 @@ function loadPongConversation(index) {
     pongState.phraseEl.textContent = conv.prompt;
     pongState.phraseEl.classList.remove('correct-flash', 'wrong-flash');
     pongState.phraseY = -120;
-    pongState.phraseX = 30 + Math.random() * (gameArea.offsetWidth - 260);
     pongState.loopCount = 0;
     pongState.recapping = false;
     if (pongState.subtitleEl) { pongState.subtitleEl.remove(); pongState.subtitleEl = null; }
@@ -704,8 +703,8 @@ function updatePongMode(deltaTime) {
     }
     const phraseW = pongState.phraseEl.offsetWidth || 200;
     const phraseH = pongState.phraseEl.offsetHeight || 60;
-    const phraseCX = pongState.phraseX + phraseW / 2;
-    pongState.phraseEl.style.left = pongState.phraseX + 'px';
+    const phraseCX = areaWidth / 2;
+    pongState.phraseEl.style.left = (phraseCX - phraseW / 2) + 'px';
     pongState.phraseEl.style.top = pongState.phraseY + 'px';
 
     // Keep subtitle just below phrase (horizontal centering handled by CSS)
@@ -717,7 +716,6 @@ function updatePongMode(deltaTime) {
     const replyRowTop = areaHeight - 54 - 72 - 50;
     if (!pongState.recapping && pongState.phraseY > replyRowTop) {
         pongState.phraseY = -phraseH - 20;
-        pongState.phraseX = 30 + Math.random() * (areaWidth - 260);
         pongState.loopCount++;
         speakFrench(PONG_CONVERSATIONS[pongState.convIndex].prompt);
         // Show English subtitle after first unanswered loop
@@ -971,7 +969,8 @@ function startGame() {
     
     // Event listeners
     pauseBtn.addEventListener('click', togglePause);
-    skipRoundBtn.addEventListener('click', skipRound);
+    skipRoundBtn.addEventListener('click', () => skipRound(1));
+    document.getElementById('prev-round-btn').addEventListener('click', () => skipRound(-1));
     pauseOverlay.addEventListener('click', togglePause);
     
     document.addEventListener('keydown', handleKeydown);
@@ -1678,7 +1677,7 @@ function startNextRound() {
     }
 }
 
-function skipRound() {
+function skipRound(direction = 1) {
     // Stop current round activity
     if (state.spawnInterval) {
         clearInterval(state.spawnInterval);
@@ -1709,8 +1708,9 @@ function skipRound() {
     document.getElementById('paddle-hint').classList.remove('show');
     document.getElementById('top-score').style.display = 'none';
     
-    // Increment round and start the next one
-    state.currentRound++;
+    // Move to the target round
+    state.currentRound = Math.max(1, state.currentRound + direction);
+    const skipImmediate = state.paused;
     
     // Show round title card with instructions
     const isCoffeeShopRound2 = state.currentRound === 4;
@@ -1742,7 +1742,7 @@ function skipRound() {
             setTimeout(() => {
                 console.log('R5 (skip): After 1s - cards in state:', state.cards.length, 'DOM cards:', gameArea.querySelectorAll('.card').length);
             }, 1000);
-        });
+        }, skipImmediate);
     } else if (isPongRound2) {
         roundTitleOverlay.classList.add('show');
         roundTitleText.textContent = `Round ${frenchRoundNumber(state.currentRound)} - Conversation Pong`;
@@ -1752,36 +1752,36 @@ function skipRound() {
             roundTitleOverlay.classList.remove('show');
             resetRoundTimer();
             startRoundTimer();
-        });
+        }, skipImmediate);
     } else if (isCoffeeShopRound2) {
         // Show special instructions for coffee shop round
         roundTitleOverlay.classList.add('show');
         roundTitleText.textContent = `Round ${frenchRoundNumber(state.currentRound)} - Au Café`;
         roundTitleInstructions.textContent = 'Match café items to their French names!';
-        
+
         // Setup round while showing title
         setupRound();
-        
+
         // After 3 seconds, start the round
         runCountdown(() => {
             roundTitleOverlay.classList.remove('show');
             resetRoundTimer();
             startRoundTimer();
             startSpawning();
-        });
+        }, skipImmediate);
     } else if (isShooterRound2) {
         // Show special instructions for shooter mode
         roundTitleOverlay.classList.add('show');
         roundTitleText.textContent = `Round ${frenchRoundNumber(state.currentRound)} - Breakout!`;
         roundTitleInstructions.innerHTML = '← → move paddle · Catch the matching emojis!<br><br><span style="color:#d32f2f;font-weight:600;">⚠️ Caution: Hitting the wrong word increases the speed of the emoji!</span>';
-        
+
         setupRound();
         runCountdown(() => {
             roundTitleOverlay.classList.remove('show');
             resetRoundTimer();
             startRoundTimer();
             startSpawning();
-        });
+        }, skipImmediate);
     } else {
         validationOverlay.classList.add('show');
         validationText.textContent = 'Match the Pairs';
@@ -1793,7 +1793,7 @@ function skipRound() {
             resetRoundTimer();
             startRoundTimer();
             startSpawning();
-        });
+        }, skipImmediate);
     }
 }
 
@@ -3949,12 +3949,24 @@ function handleTypingInput(numeral) {
 // PAUSE
 // ============================================
 function togglePause() {
-    state.paused = !state.paused;
-    pauseOverlay.classList.toggle('show', state.paused);
-    pauseBtn.textContent = state.paused ? 'Resume' : 'Pause';
+    if (state.paused) {
+        // Unpausing — close overlay then count down before resuming
+        pauseOverlay.classList.remove('show');
+        pauseBtn.textContent = 'Pause';
+        pauseBtn.disabled = true;
+        runCountdown(() => {
+            state.paused = false;
+            pauseBtn.disabled = false;
+        });
+    } else {
+        state.paused = true;
+        pauseOverlay.classList.add('show');
+        pauseBtn.textContent = 'Resume';
+    }
 }
 
-function runCountdown(callback) {
+function runCountdown(callback, immediate = false) {
+    if (immediate) { callback(); return; }
     const el = document.getElementById('round-countdown');
     if (!el) { setTimeout(callback, 3000); return; }
     const steps = ['3', '2', '1'];
