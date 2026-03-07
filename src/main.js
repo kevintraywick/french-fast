@@ -412,16 +412,7 @@ const state = {
     iconSpawnQueue: [],     // compat
     wordRefillQueue: [],    // compat
     
-    // Pong mode (Round 6)
-    pongMode: false,
     cafeMode: false,
-    pongConvIndex: 0,
-    pongPhrase: null,
-    pongReplies: [],
-    pongLoaded: null,
-    pongMissile: null,
-    pongSpeed: 0.5,
-    
     roundTheme: '',      // Current round theme name
 
     // Round tracking
@@ -488,7 +479,7 @@ const pauseBtn = document.getElementById('pause-btn');
 const skipRoundBtn = document.getElementById('skip-round-btn');
 const pauseOverlay = document.getElementById('pause-overlay');
 const speedSlider = null; // Removed
-const voiceSelect = document.getElementById('voice-select');
+const voiceSelect = null; // Removed — auto voice selection only
 const voiceTestBtn = document.getElementById('voice-test-btn');
 const voiceStatusEl = null;
 const matchedCountEl = document.getElementById('matched-count');
@@ -1035,12 +1026,7 @@ handleCardClick(id);
         });
     }
 
-    if (voiceSelect) {
-        voiceSelect.addEventListener('change', () => {
-            cachedFrenchVoice = resolveSelectedVoice();
-            saveVoiceSettings();
-        });
-    }
+    // Voice is now auto-selected per round (Amelie odd, Thomas even)
 
     // Next round button
     nextRoundBtn.addEventListener('click', startNextRound);
@@ -1090,11 +1076,8 @@ function setupRound() {
     }
     state.comboMode = false;
     state.shooterMode = false;
-    state.pongMode = false;
     state.cafeMode = false;
     cleanupCafeRound();
-    state.velocityMultiplier = 1.0;
-    cleanupPongMode();
     state.missiles = [];
     state.paddleWord = null;
     state.paddleMoving = { left: false, right: false };
@@ -1137,9 +1120,10 @@ for (const m of state.missiles) {
     }
     state.missiles = [];
     
-    // Round 6: Pong
+    // Round 6: removed — skip to café
     if (state.currentRound === 6) {
-        return setupPongRound();
+        state.currentRound = 7;
+        return setupRound();
     }
 
     // Round 7: Le Café
@@ -1642,7 +1626,6 @@ function startNextRound() {
     // Show round title card with instructions
     const isCoffeeShopRound = state.currentRound === 4;
     const isListenRound = state.currentRound === 5;
-    const isPongRound = state.currentRound === 6;
     const isCafeRound = state.currentRound === 7;
     const isShooterRound = state.currentRound === 3 || state.currentRound >= 8;
     
@@ -1686,16 +1669,6 @@ function startNextRound() {
             setupRound();
         });
     } else if (isPongRound) {
-        roundTitleOverlay.classList.add('show');
-        roundTitleText.textContent = `Round ${frenchRoundNumber(state.currentRound)} - Conversation Pong`;
-        roundTitleInstructions.innerHTML = '\u2190 \u2192 move paddle \u00b7 Space to load a reply \u00b7 Space again to launch!<br><br><span style="color:#1a5c2a;font-weight:600;">\u2705 Multiple correct replies \u00b7 Speed increases with each match!</span>';
-        setupRound();
-        runCountdown(() => {
-            roundTitleOverlay.classList.remove('show');
-            resetRoundTimer();
-            startRoundTimer();
-            // No spawning needed - pong handles its own loop
-        });
     } else if (isCoffeeShopRound) {
         // Show special instructions for coffee shop round
         roundTitleOverlay.classList.add('show');
@@ -1774,7 +1747,6 @@ function skipRound(direction = 1) {
     // Show round title card with instructions
     const isCoffeeShopRound2 = state.currentRound === 4;
     const isListenRound2 = state.currentRound === 5;
-    const isPongRound2 = state.currentRound === 6;
     const isShooterRound2 = state.currentRound === 3 || state.currentRound >= 8;
     
     if (isListenRound2) {
@@ -1801,16 +1773,6 @@ function skipRound(direction = 1) {
             setTimeout(() => {
                 console.log('R5 (skip): After 1s - cards in state:', state.cards.length, 'DOM cards:', gameArea.querySelectorAll('.card').length);
             }, 1000);
-        }, skipImmediate);
-    } else if (isPongRound2) {
-        roundTitleOverlay.classList.add('show');
-        roundTitleText.textContent = `Round ${frenchRoundNumber(state.currentRound)} - Conversation Pong`;
-        roundTitleInstructions.innerHTML = '\u2190 \u2192 move paddle \u00b7 Space to load a reply \u00b7 Space again to launch!<br><br><span style="color:#1a5c2a;font-weight:600;">\u2705 Multiple correct replies \u00b7 Speed increases with each match!</span>';
-        setupRound();
-        runCountdown(() => {
-            roundTitleOverlay.classList.remove('show');
-            resetRoundTimer();
-            startRoundTimer();
         }, skipImmediate);
     } else if (isCoffeeShopRound2) {
         // Show special instructions for coffee shop round
@@ -2034,13 +1996,15 @@ function updateVoiceStatus(msg, ok=false) {
 function updateAudioBtn() {
     if (!voiceTestBtn) return;
     if (audioUnlocked) {
-        voiceTestBtn.textContent = '🔊 Audio';
+        voiceTestBtn.textContent = '🔊';
         voiceTestBtn.classList.add('audio-on');
         voiceTestBtn.classList.remove('audio-off');
+        voiceTestBtn.title = 'Audio on — click to disable';
     } else {
-        voiceTestBtn.textContent = '🔇 Audio';
+        voiceTestBtn.textContent = '🔇';
         voiceTestBtn.classList.remove('audio-on');
         voiceTestBtn.classList.add('audio-off');
+        voiceTestBtn.title = 'Audio off — click to enable';
     }
 }
 
@@ -2916,10 +2880,8 @@ function update(currentTime) {
     if (!state.paused) {
         updateCards(deltaTime);
         
-        // Update paddle/pong mode
-        if (state.pongMode) {
-            updatePongMode(deltaTime);
-        } else if (state.shooterMode) {
+        // Update paddle/shooter mode
+        if (state.shooterMode) {
             updatePaddleMode(deltaTime);
         }
     }
@@ -3685,23 +3647,6 @@ function removeCard(card) {
 // KEYBOARD
 // ============================================
 function handleKeydown(e) {
-    // Pong mode controls
-    if (state.pongMode && !state.paused) {
-        if (e.key === 'ArrowLeft') {
-            e.preventDefault();
-            state.paddleMoving.left = true;
-            return;
-        } else if (e.key === 'ArrowRight') {
-            e.preventDefault();
-            state.paddleMoving.right = true;
-            return;
-        } else if (e.key === ' ') {
-            e.preventDefault();
-            pongSpaceBar();
-            return;
-        }
-    }
-
     // Paddle mode controls
     if (state.shooterMode && !state.paused) {
         if (e.key === 'ArrowLeft') {
@@ -3746,7 +3691,7 @@ function handleKeydown(e) {
 }
 
 function handleKeyup(e) {
-    if (state.shooterMode || state.pongMode) {
+    if (state.shooterMode) {
         if (e.key === 'ArrowLeft') state.paddleMoving.left = false;
         if (e.key === 'ArrowRight') state.paddleMoving.right = false;
     }
