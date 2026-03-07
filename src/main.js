@@ -1,4 +1,9 @@
 // ============================================
+// CAFÉ ROUND — ROUND 7
+// ============================================
+import { initCafeRound, cleanupCafeRound } from './rounds/cafe.js';
+
+// ============================================
 // VOCABULARY DATA
 // ============================================
 const VOCABULARY = [
@@ -409,6 +414,7 @@ const state = {
     
     // Pong mode (Round 6)
     pongMode: false,
+    cafeMode: false,
     pongConvIndex: 0,
     pongPhrase: null,
     pongReplies: [],
@@ -1085,6 +1091,8 @@ function setupRound() {
     state.comboMode = false;
     state.shooterMode = false;
     state.pongMode = false;
+    state.cafeMode = false;
+    cleanupCafeRound();
     state.velocityMultiplier = 1.0;
     cleanupPongMode();
     state.missiles = [];
@@ -1134,8 +1142,28 @@ for (const m of state.missiles) {
         return setupPongRound();
     }
 
-    // Round 3+: Paddle Breakout (also R7+)
-    if (state.currentRound === 3 || state.currentRound >= 7) {
+    // Round 7: Le Café
+    if (state.currentRound === 7) {
+        state.cafeMode = true;
+        state.roundTheme = 'Le Café';
+        const gameArea = document.getElementById('game-area');
+        initCafeRound({
+            speakFrench,
+            gameArea,
+            onComplete: (action) => {
+                if (action === 'replay') {
+                    state.currentRound = 7;
+                    setupRound();
+                } else {
+                    startNextRound();
+                }
+            }
+        });
+        return true;
+    }
+
+    // Round 3+: Paddle Breakout (also R8+)
+    if (state.currentRound === 3 || state.currentRound >= 8) {
 state.iconMode = false;
 state.phraseMode = false;
 state.colorMode = false;
@@ -1568,7 +1596,7 @@ function getSpawnPosition() {
     }
     
     // Non-breakout rounds: round-scaled launch speed with wider tile-to-tile variance
-    if (!(state.currentRound === 3 || state.currentRound >= 7)) {
+    if (!(state.currentRound === 3 || state.currentRound >= 8)) {
         const baseMag = Math.hypot(vx, vy) || 1;
         const displayRound = state.currentRound === 4 ? 3 : state.currentRound === 5 ? 4 : Math.max(1, state.currentRound || 1);
         const roundBoost = Math.min(0.42, (displayRound - 1) * 0.14);
@@ -1615,7 +1643,8 @@ function startNextRound() {
     const isCoffeeShopRound = state.currentRound === 4;
     const isListenRound = state.currentRound === 5;
     const isPongRound = state.currentRound === 6;
-    const isShooterRound = state.currentRound === 3 || state.currentRound >= 7;
+    const isCafeRound = state.currentRound === 7;
+    const isShooterRound = state.currentRound === 3 || state.currentRound >= 8;
     
     if (isListenRound) {
         // Show special instructions for listen & match round
@@ -1646,6 +1675,15 @@ function startNextRound() {
                 console.log('R5: After 1s - cards in state:', state.cards.length, 'DOM cards:', gameArea.querySelectorAll('.card').length);
                 console.log('R5: activePairs:', state.activePairs.size, 'listenSpawnIndex:', state.listenSpawnIndex);
             }, 1000);
+        });
+    } else if (isCafeRound) {
+        roundTitleOverlay.classList.add('show');
+        roundTitleText.textContent = `Round ${frenchRoundNumber(state.currentRound)} - Le Café`;
+        roundTitleInstructions.textContent = 'Écoutez les clients et servez les bonnes commandes!';
+        runCountdown(() => {
+            roundTitleOverlay.classList.remove('show');
+            resetRoundTimer();
+            setupRound();
         });
     } else if (isPongRound) {
         roundTitleOverlay.classList.add('show');
@@ -1737,7 +1775,7 @@ function skipRound(direction = 1) {
     const isCoffeeShopRound2 = state.currentRound === 4;
     const isListenRound2 = state.currentRound === 5;
     const isPongRound2 = state.currentRound === 6;
-    const isShooterRound2 = state.currentRound === 3 || state.currentRound >= 7;
+    const isShooterRound2 = state.currentRound === 3 || state.currentRound >= 8;
     
     if (isListenRound2) {
         console.log('R5 (skip): Showing title overlay');
