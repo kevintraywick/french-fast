@@ -900,18 +900,8 @@ function startGame() {
     loadProgress();
     updateProgressDisplay();
     
-    // Show audio setup overlay and flash the controls
-    audioSetupOverlay.classList.add('show');
-    if (voiceSelect) voiceSelect.classList.add('flash-attention');
-    voiceTestBtn.classList.add('flash-attention');
-    
-    // After 5 seconds, stop flashing and proceed to validation
-    setTimeout(() => {
-        if (voiceSelect) voiceSelect.classList.remove('flash-attention');
-        voiceTestBtn.classList.remove('flash-attention');
-        audioSetupOverlay.classList.remove('show');
-        
-        // Show "Match the Pairs" screen
+    // Show "Match the Pairs" screen immediately
+    {
         validationOverlay.classList.add('show');
         validationText.textContent = 'Match the Pairs';
         validationSubtitle.textContent = "(Don't forget to enable audio and select a voice)";
@@ -963,8 +953,8 @@ function startGame() {
             // Start spawning
             startSpawning();
         });
-    }, 5000);
-    
+    }
+
     // Event listeners
     pauseBtn.addEventListener('click', togglePause);
     skipRoundBtn.addEventListener('click', () => skipRound(1));
@@ -1653,7 +1643,6 @@ function startNextRound() {
         console.log('R5: Showing title overlay');
         // Ensure no stale overlays
         validationOverlay.classList.remove('show');
-        audioSetupOverlay.classList.remove('show');
         roundTitleOverlay.classList.add('show');
         roundTitleText.textContent = `Round ${frenchRoundNumber(state.currentRound)} - Tell Me About It`;
         roundTitleInstructions.textContent = 'Tap 👄 to hear French · Then tap the matching English!';
@@ -2897,7 +2886,7 @@ function update(currentTime) {
     lastTime = currentTime;
     
     if (!state.paused) {
-        updateCards(deltaTime);
+        updateCards(deltaTime, currentTime);
         
         // Update paddle/shooter mode
         if (state.shooterMode) {
@@ -2908,7 +2897,7 @@ function update(currentTime) {
     gameLoop = requestAnimationFrame(update);
 }
 
-function updateCards(deltaTime) {
+function updateCards(deltaTime, now) {
     const areaWidth = gameArea.offsetWidth - 60;
     const areaHeight = gameArea.offsetHeight;
     const centerX = areaWidth / 2;
@@ -2999,7 +2988,9 @@ function updateCards(deltaTime) {
             const speed = Math.hypot(card.vx, card.vy);
             const roundSpeedFactor = state.currentRound === 1 ? 1.2 : 1.0;
             const minSpeed = 0.7  * card.speedVariance * roundSpeedFactor;
-            const maxSpeed = 2.55 * card.speedVariance * roundSpeedFactor;
+            const baseMaxSpeed = 2.55 * card.speedVariance * roundSpeedFactor;
+            const isBoosted = card.boostUntil && now < card.boostUntil;
+            const maxSpeed = isBoosted ? baseMaxSpeed * 2.0 : baseMaxSpeed;
             if (speed < minSpeed) {
                 if (speed < 0.0001) {
                     const angle = Math.random() * Math.PI * 2;
@@ -3014,21 +3005,35 @@ function updateCards(deltaTime) {
                 card.vy = (card.vy / speed) * maxSpeed;
             }
 
+            let wallBounced = false;
             if (card.x < 10) {
                 card.x = 10;
                 card.vx = Math.abs(card.vx);
+                wallBounced = true;
             }
             if (card.x + card.width > areaWidth) {
                 card.x = areaWidth - card.width;
                 card.vx = -Math.abs(card.vx);
+                wallBounced = true;
             }
             if (card.y < 10) {
                 card.y = 10;
                 card.vy = Math.abs(card.vy);
+                wallBounced = true;
             }
             if (card.y + card.height > areaHeight - 10) {
                 card.y = areaHeight - card.height - 10;
                 card.vy = -Math.abs(card.vy);
+                wallBounced = true;
+            }
+            if (wallBounced) {
+                const spd = Math.hypot(card.vx, card.vy);
+                const boostedSpd = Math.min(spd * 1.05, baseMaxSpeed * 2.0);
+                if (spd > 0) {
+                    card.vx = (card.vx / spd) * boostedSpd;
+                    card.vy = (card.vy / spd) * boostedSpd;
+                }
+                card.boostUntil = now + 3000;
             }
         }
     }
@@ -3110,14 +3115,32 @@ function updateCards(deltaTime) {
             if (!a.frozen) {
                 a.vx -= impulseX * invMassA;
                 a.vy -= impulseY * invMassA;
+                const spdA = Math.hypot(a.vx, a.vy);
+                if (spdA > 0) {
+                    const roundSFA = state.currentRound === 1 ? 1.2 : 1.0;
+                    const baseMaxA = 2.55 * a.speedVariance * roundSFA;
+                    const boostedSpdA = Math.min(spdA * 1.05, baseMaxA * 2.0);
+                    a.vx = (a.vx / spdA) * boostedSpdA;
+                    a.vy = (a.vy / spdA) * boostedSpdA;
+                }
+                a.boostUntil = now + 3000;
             }
             if (!b.frozen) {
                 b.vx += impulseX * invMassB;
                 b.vy += impulseY * invMassB;
+                const spdB = Math.hypot(b.vx, b.vy);
+                if (spdB > 0) {
+                    const roundSFB = state.currentRound === 1 ? 1.2 : 1.0;
+                    const baseMaxB = 2.55 * b.speedVariance * roundSFB;
+                    const boostedSpdB = Math.min(spdB * 1.05, baseMaxB * 2.0);
+                    b.vx = (b.vx / spdB) * boostedSpdB;
+                    b.vy = (b.vy / spdB) * boostedSpdB;
+                }
+                b.boostUntil = now + 3000;
             }
         }
     }
-    
+
     // Update DOM
     for (const card of state.cards) {
         card.element.style.left = card.x + 'px';

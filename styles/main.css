@@ -171,13 +171,6 @@
   /* --- Card incorrect tint (light red flash bg) --- */
   --card-incorrect-tint: #ffdddd;
 
-  /* --- Flash attention (audio controls) --- */
-  --flash-attention-from:      #FF5722;
-  --flash-attention-border:    #E64A19;
-  --flash-attention-to:        #FFCCBC;
-  --flash-attention-to-border: #FF5722;
-  --flash-attention-to-text:   #BF360C;
-
   /* --- Center icon circle background --- */
   --icon-bg-from: #ffffff;
   --icon-bg-to:   #f0f0f0;
@@ -702,11 +695,16 @@ body.dark-mode #breakout-score { text-shadow: 0 2px 6px rgba(0,0,0,0.5); }
 
 /* Emoji card */
 .emoji-card {
+    width: 72px;
+    height: 72px;
     font-size: 42px;
-    padding: 8px;
+    padding: 0;
     background: var(--emoji-card-bg);
-    border-radius: 12px;
+    border-radius: 50%;
     border: 3px solid transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .emoji-card.selected {
@@ -718,26 +716,33 @@ body.dark-mode #breakout-score { text-shadow: 0 2px 6px rgba(0,0,0,0.5); }
 }
 
 .emoji-card.show-word {
-    font-size: 14px !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    min-width: 60px;
-    padding: 8px 12px;
+    font-size: 13px !important;
+    text-align: center;
+    word-break: break-word;
+    overflow: hidden;
+    padding: 4px;
 }
 
 /* flashRedEmoji removed — uses shared cardIncorrect keyframe */
 
 /* Word card */
 .word-card {
-    font-size: 16px;
+    width: 84px;
+    height: 84px;
+    font-size: 13px;
     font-weight: 500;
-    padding: 10px 16px;
+    padding: 0;
     background: var(--word-card-bg);
-    border-radius: 8px;
+    border-radius: 50%;
     border: 3px solid transparent;
     color: var(--word-card-text);
-    white-space: nowrap;
+    white-space: normal;
+    word-break: break-word;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
 }
 
 .word-card.selected {
@@ -1334,25 +1339,6 @@ body.dark-mode #breakout-score { text-shadow: 0 2px 6px rgba(0,0,0,0.5); }
 #audio-setup-message {
     text-align: center;
     margin-bottom: 40px;
-}
-
-/* Flashing attention for audio controls */
-.flash-attention {
-    animation: flashAttention 0.5s ease-in-out infinite;
-    box-shadow: 0 0 8px rgba(255, 87, 34, 0.6);
-}
-
-@keyframes flashAttention {
-    0%, 100% {
-        background-color: var(--flash-attention-from);
-        border-color: var(--flash-attention-border);
-        color: white;
-    }
-    50% {
-        background-color: var(--flash-attention-to);
-        border-color: var(--flash-attention-to-border);
-        color: var(--flash-attention-to-text);
-    }
 }
 
 /* Round title overlay */
