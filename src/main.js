@@ -398,6 +398,7 @@ const state = {
     paddleVx: 0,
     paddleWord: null,
     paddleMoving: { left: false, right: false },
+    paddleTouchX: null,
     bounceEmojis: [],
     emojiSpawnQueue: [],
     emojiSpawnTimer: null,
@@ -502,6 +503,7 @@ const centerIconContainer = document.getElementById('center-icon-container');
 const centerIconCircle = document.getElementById('center-icon-circle');
 const croissantShooter = document.getElementById('croissant-shooter');
 const croissantShip = document.getElementById('croissant-ship');
+const paddleEl      = document.getElementById('paddle');
 
 // ============================================
 // PONG MODE (Round 6)
@@ -971,7 +973,22 @@ function startGame() {
     
     document.addEventListener('keydown', handleKeydown);
     document.addEventListener('keyup', handleKeyup);
-    
+
+    // Touch paddle — track finger X for breakout round
+    // Cache gameArea rect; invalidate on resize to avoid calling getBoundingClientRect every touchmove
+    let cachedGameAreaRect = null;
+    window.addEventListener('resize', () => { cachedGameAreaRect = null; }, { passive: true });
+
+    function handlePaddleTouch(e) {
+        if (!state.shooterMode || state.paused) return;
+        const touch = e.touches[0];
+        if (!cachedGameAreaRect) cachedGameAreaRect = gameArea.getBoundingClientRect();
+        state.paddleTouchX = touch.clientX - cachedGameAreaRect.left;
+    }
+    gameArea.addEventListener('touchstart', handlePaddleTouch, { passive: true });
+    gameArea.addEventListener('touchmove',  handlePaddleTouch, { passive: true });
+    gameArea.addEventListener('touchend',   () => { state.paddleTouchX = null; }, { passive: true });
+
     // Click handler for cards
     gameArea.addEventListener('click', (e) => {
     const cardEl = e.target.closest('.card');
@@ -1081,6 +1098,7 @@ function setupRound() {
     state.missiles = [];
     state.paddleWord = null;
     state.paddleMoving = { left: false, right: false };
+    state.paddleTouchX = null;
     state.roundTheme = '';
     
     // Hide center icon and shooter by default
@@ -1156,6 +1174,7 @@ state.roundTheme = 'Breakout!';
 state.missiles = [];
 state.bounceEmojis = [];
 state.paddleMoving = { left: false, right: false };
+state.paddleTouchX = null;
 
 const isLearned = (word) => {
     const key = normalizeFrench(word.french);
@@ -3756,39 +3775,46 @@ function updatePaddleMode(deltaTime) {
     const paddleWidth = 140;
     const paddleHeight = 42;
     const paddleY = areaHeight - paddleHeight - 12;
-    const paddle = document.getElementById('paddle');
-    
-    // Move paddle with drift — accelerate toward target, coast on release
-    const maxPSpeed = 11.52;
-    const targetVx = state.paddleMoving.left ? -maxPSpeed : state.paddleMoving.right ? maxPSpeed : 0;
-    if (targetVx !== 0) {
-        state.paddleVx += (targetVx - state.paddleVx) * 0.3 * deltaTime;
+    const paddle = paddleEl;
+
+    // Move paddle — touch tracking takes priority over keyboard
+    if (state.paddleTouchX !== null) {
+        // Direct touch: smoothly follow finger, centering paddle under it
+        const targetX = Math.max(0, Math.min(areaWidth - paddleWidth, state.paddleTouchX - paddleWidth / 2));
+        state.paddleX += (targetX - state.paddleX) * 0.35 * deltaTime;
     } else {
-        state.paddleVx *= Math.pow(0.78, deltaTime);
+        // Keyboard drift — accelerate toward target, coast on release
+        const maxPSpeed = 11.52;
+        const targetVx = state.paddleMoving.left ? -maxPSpeed : state.paddleMoving.right ? maxPSpeed : 0;
+        if (targetVx !== 0) {
+            state.paddleVx += (targetVx - state.paddleVx) * 0.3 * deltaTime;
+        } else {
+            state.paddleVx *= Math.pow(0.78, deltaTime);
+        }
+        state.paddleX += state.paddleVx * deltaTime;
     }
-    state.paddleX += state.paddleVx * deltaTime;
     state.paddleX = Math.max(0, Math.min(areaWidth - paddleWidth, state.paddleX));
     if (state.paddleX <= 0 || state.paddleX >= areaWidth - paddleWidth) state.paddleVx = 0;
     paddle.style.left = state.paddleX + 'px';
     
     const paddleCX = state.paddleX + paddleWidth / 2;
     
+    // Cache alive count once — used for wall-boost threshold each frame
+    const aliveCount = state.bounceEmojis.filter(e => e.alive).length;
+    const wallBoost = aliveCount < 10 ? 1.1 : 1.0;
+
     // Update each emoji
+    const now = performance.now();
     for (let i = state.bounceEmojis.length - 1; i >= 0; i--) {
         const em = state.bounceEmojis[i];
         if (!em.alive) continue;
-        
+
         const s = em.size;
-        
+
         // Speed boost multiplier (50% faster for 2s after paddle hit)
-        const now = performance.now();
         const boostFactor = em.boostUntil > now ? 1.5 : 1.0;
         em.x += em.vx * deltaTime * boostFactor;
         em.y += em.vy * deltaTime * boostFactor;
-        
-        // Wall bounces — gain 10% speed when < 10 emojis alive
-        const aliveCount = state.bounceEmojis.filter(e => e.alive).length;
-        const wallBoost = aliveCount < 10 ? 1.1 : 1.0;
         if (em.x <= 0) { em.x = 0; em.vx = Math.abs(em.vx) * wallBoost; }
         if (em.x + s >= areaWidth) { em.x = areaWidth - s; em.vx = -Math.abs(em.vx) * wallBoost; }
         if (em.y <= 0) { em.y = 0; em.vy = Math.abs(em.vy) * wallBoost; }
@@ -3977,7 +4003,7 @@ function handleComboFeedback(correct, wordData) {
 }
 
 function assignNewPaddleWord(direction = 1) {
-    const paddle = document.getElementById('paddle');
+    const paddle = paddleEl;
     // Build ordered list: live unmatched words first, then the rest
     const liveKeys = [...new Set(
         state.bounceEmojis.filter(e => e.alive).map(e => normalizeFrench(e.wordData.french))
