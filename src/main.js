@@ -216,7 +216,7 @@ const FRENCH_CAFE = [
 ];
 
 // ============================================
-// COFFEE SHOP ITEMS & ONE-WORD PHRASES (Round 6)
+// COFFEE SHOP ITEMS & ONE-WORD PHRASES (Round 4)
 // ============================================
 const COFFEE_SHOP = [
     // Drinks
@@ -275,48 +275,6 @@ const CAFE_ORDERING = [
     { french: "Encore un, s'il vous plaît", english: "Another one, please" },
     { french: "C'est tout", english: "That's all" },
     { french: "Bonne journée", english: "Have a nice day" },
-];
-
-// ============================================
-// PONG CONVERSATION DATA (Round 6)
-// ============================================
-const PONG_CONVERSATIONS = [
-    { prompt: "Bonjour !", promptEnglish: "Hello!",
-      validReplies: [{ text: "Bonjour !", english: "Hello!" }, { text: "Salut !", english: "Hi!" }, { text: "Bonsoir !", english: "Good evening!" }],
-      distractors: ["Merci.", "Au revoir.", "Non merci."] },
-    { prompt: "Comment allez-vous ?", promptEnglish: "How are you?",
-      validReplies: [{ text: "Très bien, merci !", english: "Very well, thank you!" }, { text: "Ça va bien.", english: "I'm doing well." }, { text: "Pas mal, merci.", english: "Not bad, thank you." }],
-      distractors: ["S'il vous plaît.", "Au revoir.", "Excusez-moi."] },
-    { prompt: "Qu'est-ce que vous désirez ?", promptEnglish: "What would you like?",
-      validReplies: [{ text: "Un café, s'il vous plaît.", english: "A coffee, please." }, { text: "Je voudrais un thé.", english: "I'd like a tea." }, { text: "Un croissant, merci.", english: "A croissant, thank you." }],
-      distractors: ["Bonsoir !", "C'est combien ?", "Très bien."] },
-    { prompt: "Avec du lait ?", promptEnglish: "With milk?",
-      validReplies: [{ text: "Oui, s'il vous plaît.", english: "Yes, please." }, { text: "Non, merci.", english: "No, thank you." }, { text: "Un peu, merci.", english: "A little, thank you." }],
-      distractors: ["Bonjour !", "C'est délicieux.", "Au revoir."] },
-    { prompt: "C'est combien ?", promptEnglish: "How much is it?",
-      validReplies: [{ text: "Voilà cinq euros.", english: "Here's five euros." }, { text: "Je peux payer par carte ?", english: "Can I pay by card?" }, { text: "Gardez la monnaie.", english: "Keep the change." }],
-      distractors: ["Bonjour !", "Avec du lait ?", "Non merci."] },
-    { prompt: "Excusez-moi !", promptEnglish: "Excuse me!",
-      validReplies: [{ text: "Oui ?", english: "Yes?" }, { text: "Je vous en prie.", english: "Not at all." }, { text: "Bien sûr !", english: "Of course!" }],
-      distractors: ["Bonjour !", "Au revoir.", "Un thé."] },
-    { prompt: "Où sont les toilettes ?", promptEnglish: "Where are the toilets?",
-      validReplies: [{ text: "Là-bas, à droite.", english: "Over there, on the right." }, { text: "Au fond, à gauche.", english: "At the back, on the left." }, { text: "Au premier étage.", english: "On the first floor." }],
-      distractors: ["Bonjour !", "Merci beaucoup.", "Un café."] },
-    { prompt: "C'est délicieux !", promptEnglish: "It's delicious!",
-      validReplies: [{ text: "Merci beaucoup !", english: "Thank you very much!" }, { text: "Je suis content !", english: "I'm glad!" }, { text: "C'est ma spécialité.", english: "It's my specialty." }],
-      distractors: ["L'addition !", "Excusez-moi.", "Au revoir."] },
-    { prompt: "Vous parlez anglais ?", promptEnglish: "Do you speak English?",
-      validReplies: [{ text: "Oui, un peu.", english: "Yes, a little." }, { text: "Non, désolé.", english: "No, sorry." }, { text: "Je préfère le français !", english: "I prefer French!" }],
-      distractors: ["Bonjour !", "C'est combien ?", "Au revoir."] },
-    { prompt: "L'addition, s'il vous plaît.", promptEnglish: "The bill, please.",
-      validReplies: [{ text: "Voilà !", english: "Here you go!" }, { text: "Tout de suite !", english: "Right away!" }, { text: "Bien sûr, monsieur.", english: "Of course, sir." }],
-      distractors: ["Au revoir !", "Bonjour !", "Avec plaisir."] },
-    { prompt: "Bonne journée !", promptEnglish: "Have a good day!",
-      validReplies: [{ text: "Merci, vous aussi !", english: "Thank you, you too!" }, { text: "Au revoir !", english: "Goodbye!" }, { text: "À bientôt !", english: "See you soon!" }],
-      distractors: ["Oui, s'il vous plaît.", "C'est combien ?", "Un café."] },
-    { prompt: "À bientôt !", promptEnglish: "See you soon!",
-      validReplies: [{ text: "À bientôt !", english: "See you soon!" }, { text: "Au revoir !", english: "Goodbye!" }, { text: "Bonne journée !", english: "Have a good day!" }],
-      distractors: ["Bonjour !", "Un café.", "C'est combien ?"] },
 ];
 
 // ============================================
@@ -412,16 +370,8 @@ const state = {
     iconSpawnQueue: [],     // compat
     wordRefillQueue: [],    // compat
     
-    // Pong mode (Round 6)
-    pongMode: false,
     cafeMode: false,
-    pongConvIndex: 0,
-    pongPhrase: null,
-    pongReplies: [],
-    pongLoaded: null,
-    pongMissile: null,
-    pongSpeed: 0.5,
-    
+
     roundTheme: '',      // Current round theme name
 
     // Round tracking
@@ -511,377 +461,6 @@ const centerIconContainer = document.getElementById('center-icon-container');
 const centerIconCircle = document.getElementById('center-icon-circle');
 const croissantShooter = document.getElementById('croissant-shooter');
 const croissantShip = document.getElementById('croissant-ship');
-
-// ============================================
-// PONG MODE (Round 6)
-// ============================================
-const pongState = {
-    phraseEl: null,
-    missileEl: null,
-    hintEl: null,
-    subtitleEl: null,
-    phraseX: 0,
-    replyEls: [],
-    replies: [],
-    phraseY: -100,
-    speed: 1.0,
-    matchCount: 0,
-    convIndex: 0,
-    loadedIdx: -1,
-    activeIdx: -1,
-    missileActive: false,
-    missileX: 0,
-    missileY: 0,
-    missileValid: false,
-    launchedText: null,
-    launchedTextEnglish: null,
-    loopCount: 0,
-    recapping: false,
-};
-
-function setupPongRound() {
-    state.pongMode = true;
-    state.roundTheme = 'Conversation Pong';
-
-    pongState.phraseY = -100;
-    pongState.convIndex = 0;
-    pongState.speed = 1.0;
-    pongState.matchCount = 0;
-    pongState.loadedIdx = -1;
-    pongState.activeIdx = -1;
-    pongState.missileActive = false;
-
-    cleanupPongMode();
-
-    const phraseEl = document.createElement('div');
-    phraseEl.className = 'pong-phrase';
-    phraseEl.style.cursor = 'pointer';
-    phraseEl.addEventListener('click', () => {
-        const conv = PONG_CONVERSATIONS[pongState.convIndex];
-        if (conv) speakFrench(conv.prompt);
-    });
-    gameArea.appendChild(phraseEl);
-    pongState.phraseEl = phraseEl;
-
-    const missileEl = document.createElement('div');
-    missileEl.className = 'pong-missile';
-    missileEl.style.display = 'none';
-    gameArea.appendChild(missileEl);
-    pongState.missileEl = missileEl;
-
-    const hintEl = document.createElement('div');
-    hintEl.className = 'pong-hint';
-    hintEl.textContent = '\u2190 \u2192 move \u00b7 Space to load \u00b7 Space again to launch';
-    gameArea.appendChild(hintEl);
-    pongState.hintEl = hintEl;
-
-    state.roundWords = PONG_CONVERSATIONS.map((c, i) => ({
-        french: c.prompt,
-        english: c.validReplies[0].text,
-        key: 'pong_' + i,
-    }));
-    state.matchedKeys.clear();
-    state.wrongCounts = {};
-    state.matchedSteps = 0;
-
-    roundNumberEl.textContent = frenchRoundNumber(state.currentRound);
-    roundThemeEl.textContent = state.roundTheme;
-    updateCardCount();
-
-    const paddle = document.getElementById('paddle');
-    state.paddleX = (gameArea.offsetWidth - 140) / 2;
-    state.paddleVx = 0;
-    paddle.style.left = state.paddleX + 'px';
-    paddle.textContent = 'Space to load';
-    state.paddleMoving = { left: false, right: false };
-    document.getElementById('paddle-container').classList.add('show');
-    document.getElementById('paddle-hint').classList.remove('show');
-
-    setTimeout(() => loadPongConversation(0, false), 100);
-    return true;
-}
-
-function loadPongConversation(index, speak = true) {
-    if (index >= PONG_CONVERSATIONS.length) {
-        checkRoundComplete();
-        return;
-    }
-    const conv = PONG_CONVERSATIONS[index];
-    pongState.convIndex = index;
-    pongState.loadedIdx = -1;
-    pongState.activeIdx = -1;
-    pongState.missileActive = false;
-    if (pongState.missileEl) pongState.missileEl.style.display = 'none';
-
-    pongState.phraseEl.textContent = conv.prompt;
-    pongState.phraseEl.classList.remove('correct-flash', 'wrong-flash');
-    pongState.phraseY = -120;
-    pongState.loopCount = 0;
-    pongState.recapping = false;
-    if (pongState.subtitleEl) { pongState.subtitleEl.remove(); pongState.subtitleEl = null; }
-
-    if (speak) speakFrench(conv.prompt);
-
-    const validPick = [...conv.validReplies].sort(() => Math.random() - 0.5).slice(0, 3);
-    const numDistract = 6 - validPick.length;
-    const distractPick = [...conv.distractors].sort(() => Math.random() - 0.5).slice(0, numDistract);
-    const allReplies = [
-        ...validPick.map(t => ({ text: t.text, english: t.english, valid: true })),
-        ...distractPick.map(t => ({ text: t, english: null, valid: false })),
-    ].sort(() => Math.random() - 0.5);
-
-    for (const el of pongState.replyEls) el.remove();
-    pongState.replyEls = [];
-    pongState.replies = [];
-
-    const areaWidth = gameArea.offsetWidth;
-    const areaHeight = gameArea.offsetHeight;
-    const replyY = areaHeight - 54 - 72;
-    const slotWidth = areaWidth / 6;
-
-    allReplies.forEach((reply, i) => {
-        const el = document.createElement('div');
-        el.className = 'pong-reply';
-        el.textContent = reply.text;
-        el.style.top = replyY + 'px';
-        el.style.left = '-999px';
-        el.style.cursor = 'pointer';
-        el.addEventListener('click', () => speakFrench(reply.text));
-        gameArea.appendChild(el);
-        const slotCX = slotWidth * i + slotWidth / 2;
-        requestAnimationFrame(() => {
-            el.style.left = (slotCX - el.offsetWidth / 2) + 'px';
-        });
-        pongState.replyEls.push(el);
-        pongState.replies.push({ text: reply.text, english: reply.english, valid: reply.valid, slotCX });
-    });
-
-    const paddle = document.getElementById('paddle');
-    paddle.textContent = 'Space to load';
-    document.getElementById('paddle-container').classList.remove('pong-loaded');
-}
-
-function updatePongMode(deltaTime) {
-    if (!state.pongMode || state.paused || !pongState.phraseEl) return;
-
-    const areaWidth = gameArea.offsetWidth;
-    const areaHeight = gameArea.offsetHeight;
-    const paddleWidth = 140;
-    const paddleHeight = 42;
-    const paddle = document.getElementById('paddle');
-
-    const maxPSpeed = 11.52;
-    const targetPVx = state.paddleMoving.left ? -maxPSpeed : state.paddleMoving.right ? maxPSpeed : 0;
-    if (targetPVx !== 0) {
-        state.paddleVx += (targetPVx - state.paddleVx) * 0.3 * deltaTime;
-    } else {
-        state.paddleVx *= Math.pow(0.78, deltaTime);
-    }
-    state.paddleX += state.paddleVx * deltaTime;
-    state.paddleX = Math.max(0, Math.min(areaWidth - paddleWidth, state.paddleX));
-    if (state.paddleX <= 0 || state.paddleX >= areaWidth - paddleWidth) state.paddleVx = 0;
-    paddle.style.left = state.paddleX + 'px';
-
-    const paddleCX = state.paddleX + paddleWidth / 2;
-
-    // Highlight closest reply slot
-    let closestIdx = -1;
-    let closestDist = Infinity;
-    for (let i = 0; i < pongState.replies.length; i++) {
-        const d = Math.abs(pongState.replies[i].slotCX - paddleCX);
-        if (d < closestDist) { closestDist = d; closestIdx = i; }
-    }
-    const newActive = (closestDist < 90 && pongState.loadedIdx < 0) ? closestIdx : -1;
-    if (newActive !== pongState.activeIdx) {
-        if (pongState.activeIdx >= 0 && pongState.replyEls[pongState.activeIdx]) {
-            pongState.replyEls[pongState.activeIdx].classList.remove('active');
-        }
-        if (newActive >= 0 && pongState.replyEls[newActive]) {
-            pongState.replyEls[newActive].classList.add('active');
-        }
-        pongState.activeIdx = newActive;
-    }
-
-    // Move phrase bubble down (freeze during recap)
-    if (!pongState.recapping) {
-        pongState.phraseY += pongState.speed * deltaTime;
-    }
-    const phraseW = pongState.phraseEl.offsetWidth || 200;
-    const phraseH = pongState.phraseEl.offsetHeight || 60;
-    const phraseCX = areaWidth / 2;
-    pongState.phraseEl.style.left = (phraseCX - phraseW / 2) + 'px';
-    pongState.phraseEl.style.top = pongState.phraseY + 'px';
-
-    // Keep subtitle just below phrase (horizontal centering handled by CSS)
-    if (pongState.subtitleEl) {
-        pongState.subtitleEl.style.top = (pongState.phraseY + phraseH + 6) + 'px';
-    }
-
-    // Reset phrase to top when it reaches reply row
-    const replyRowTop = areaHeight - 54 - 72 - 50;
-    if (!pongState.recapping && pongState.phraseY > replyRowTop) {
-        pongState.phraseY = -phraseH - 20;
-        pongState.loopCount++;
-        speakFrench(PONG_CONVERSATIONS[pongState.convIndex].prompt);
-        // Show English subtitle after first unanswered loop
-        if (pongState.loopCount >= 1 && !pongState.subtitleEl) {
-            const conv = PONG_CONVERSATIONS[pongState.convIndex];
-            const sub = document.createElement('div');
-            sub.className = 'pong-subtitle';
-            sub.textContent = conv.promptEnglish || '';
-            gameArea.appendChild(sub);
-            pongState.subtitleEl = sub;
-        }
-    }
-
-    // Move missile upward
-    if (pongState.missileActive && pongState.missileEl) {
-        pongState.missileY -= 14 * deltaTime;
-        pongState.missileEl.style.top = pongState.missileY + 'px';
-
-        const mW = pongState.missileEl.offsetWidth || 100;
-        const mH = pongState.missileEl.offsetHeight || 40;
-
-        const horizHit = Math.abs(pongState.missileX - phraseCX) < (phraseW / 2 + mW / 2 - 20);
-        const vertHit = pongState.missileY < pongState.phraseY + phraseH &&
-                        pongState.missileY + mH > pongState.phraseY;
-
-        if (horizHit && vertHit) {
-            pongState.missileEl.style.display = 'none';
-            pongState.missileActive = false;
-            spawnPongExplosion(pongState.missileX, pongState.phraseY + phraseH / 2);
-
-            if (pongState.missileValid) {
-                speakFrench(pongState.launchedText);
-                pongState.recapping = true;
-                pongState.phraseEl.textContent = '✓ ' + pongState.launchedText;
-                pongState.phraseEl.classList.add('correct-flash');
-                setTimeout(() => pongState.phraseEl.classList.remove('correct-flash'), 600);
-
-                // Show full exchange in English during recap
-                if (pongState.subtitleEl) { pongState.subtitleEl.remove(); pongState.subtitleEl = null; }
-                const conv = PONG_CONVERSATIONS[pongState.convIndex];
-                const sub = document.createElement('div');
-                sub.className = 'pong-subtitle';
-                sub.innerHTML = (conv.promptEnglish || '') +
-                    (pongState.launchedTextEnglish ? '<br>\u2192 ' + pongState.launchedTextEnglish : '');
-                gameArea.appendChild(sub);
-                pongState.subtitleEl = sub;
-
-                state.matchedKeys.add('pong_' + pongState.convIndex);
-                state.matchedSteps++;
-                updateCardCount();
-
-                pongState.matchCount++;
-                pongState.speed = Math.min(1.0 + pongState.matchCount * 0.18, 4.5);
-
-                checkRoundComplete();
-                if (state.matchedSteps < state.roundWords.length) {
-                    setTimeout(() => loadPongConversation(pongState.convIndex + 1), 2500);
-                }
-            } else {
-                // Wrong
-                pongState.phraseEl.classList.add('wrong-flash');
-                setTimeout(() => pongState.phraseEl.classList.remove('wrong-flash'), 600);
-                pongState.loadedIdx = -1;
-                paddle.textContent = 'Space to load';
-                document.getElementById('paddle-container').classList.remove('pong-loaded');
-            }
-        }
-
-        // Flew past top without hitting
-        if (pongState.missileY < -80) {
-            pongState.missileEl.style.display = 'none';
-            pongState.missileActive = false;
-            pongState.loadedIdx = -1;
-            paddle.textContent = 'Space to load';
-            document.getElementById('paddle-container').classList.remove('pong-loaded');
-        }
-    }
-}
-
-function pongSpaceBar() {
-    if (!state.pongMode || pongState.missileActive) return;
-    if (pongState.loadedIdx >= 0) {
-        launchPongMissile();
-    } else {
-        if (pongState.activeIdx < 0) return;
-        const reply = pongState.replies[pongState.activeIdx];
-        pongState.loadedIdx = pongState.activeIdx;
-        const paddle = document.getElementById('paddle');
-        paddle.textContent = reply.text;
-        document.getElementById('paddle-container').classList.add('pong-loaded');
-        pongState.replyEls[pongState.activeIdx].classList.remove('active');
-        pongState.replyEls[pongState.activeIdx].classList.add('loaded-dim');
-        pongState.activeIdx = -1;
-    }
-}
-
-function launchPongMissile() {
-    if (pongState.loadedIdx < 0) return;
-    const reply = pongState.replies[pongState.loadedIdx];
-    const areaHeight = gameArea.offsetHeight;
-    const paddleHeight = 42;
-    const paddleWidth = 140;
-
-    pongState.missileEl.textContent = reply.text;
-    pongState.missileEl.className = 'pong-missile';
-    pongState.missileEl.style.display = 'block';
-
-    const mW = pongState.missileEl.offsetWidth || 100;
-    pongState.missileX = state.paddleX + paddleWidth / 2;
-    pongState.missileY = areaHeight - paddleHeight - 12 - 55;
-    pongState.missileEl.style.left = (pongState.missileX - mW / 2) + 'px';
-    pongState.missileEl.style.top = pongState.missileY + 'px';
-    pongState.missileActive = true;
-    pongState.missileValid = reply.valid;
-    pongState.launchedText = reply.text;
-    pongState.launchedTextEnglish = reply.english;
-
-    if (pongState.replyEls[pongState.loadedIdx]) {
-        pongState.replyEls[pongState.loadedIdx].classList.remove('loaded-dim');
-    }
-    pongState.loadedIdx = -1;
-
-    const paddle = document.getElementById('paddle');
-    paddle.textContent = 'Space to load';
-    document.getElementById('paddle-container').classList.remove('pong-loaded');
-}
-
-function spawnPongExplosion(cx, cy) {
-    const count = 12;
-    for (let i = 0; i < count; i++) {
-        const angle = (i / count) * Math.PI * 2;
-        const dist = 40 + Math.random() * 40;
-        const dx = Math.cos(angle) * dist;
-        const dy = Math.sin(angle) * dist;
-        const p = document.createElement('div');
-        p.className = 'pong-particle';
-        p.style.left = cx + 'px';
-        p.style.top = cy + 'px';
-        p.style.setProperty('--dx', dx + 'px');
-        p.style.setProperty('--dy', dy + 'px');
-        gameArea.appendChild(p);
-        setTimeout(() => { if (p.parentNode) p.remove(); }, 600);
-    }
-}
-
-function cleanupPongMode() {
-    if (pongState.phraseEl) { pongState.phraseEl.remove(); pongState.phraseEl = null; }
-    if (pongState.missileEl) { pongState.missileEl.remove(); pongState.missileEl = null; }
-    if (pongState.hintEl) { pongState.hintEl.remove(); pongState.hintEl = null; }
-    if (pongState.subtitleEl) { pongState.subtitleEl.remove(); pongState.subtitleEl = null; }
-    for (const el of pongState.replyEls) if (el.parentNode) el.remove();
-    pongState.replyEls = [];
-    pongState.replies = [];
-    pongState.missileActive = false;
-    pongState.loadedIdx = -1;
-    pongState.activeIdx = -1;
-    pongState.loopCount = 0;
-    pongState.recapping = false;
-    pongState.launchedText = null;
-    pongState.launchedTextEnglish = null;
-}
 
 // ============================================
 // INITIALIZATION
@@ -1090,11 +669,9 @@ function setupRound() {
     }
     state.comboMode = false;
     state.shooterMode = false;
-    state.pongMode = false;
     state.cafeMode = false;
     cleanupCafeRound();
     state.velocityMultiplier = 1.0;
-    cleanupPongMode();
     state.missiles = [];
     state.paddleWord = null;
     state.paddleMoving = { left: false, right: false };
@@ -1137,13 +714,8 @@ for (const m of state.missiles) {
     }
     state.missiles = [];
     
-    // Round 6: Pong
+    // Round 6: Le Café
     if (state.currentRound === 6) {
-        return setupPongRound();
-    }
-
-    // Round 7: Le Café
-    if (state.currentRound === 7) {
         state.cafeMode = true;
         state.roundTheme = 'Le Café';
         const gameArea = document.getElementById('game-area');
@@ -1163,7 +735,7 @@ for (const m of state.missiles) {
     }
 
     // Round 3+: Paddle Breakout (also R8+)
-    if (state.currentRound === 3 || state.currentRound >= 8) {
+    if (state.currentRound === 3 || state.currentRound >= 7) {
 state.iconMode = false;
 state.phraseMode = false;
 state.colorMode = false;
@@ -1596,7 +1168,7 @@ function getSpawnPosition() {
     }
     
     // Non-breakout rounds: round-scaled launch speed with wider tile-to-tile variance
-    if (!(state.currentRound === 3 || state.currentRound >= 8)) {
+    if (!(state.currentRound === 3 || state.currentRound >= 7)) {
         const baseMag = Math.hypot(vx, vy) || 1;
         const displayRound = state.currentRound === 4 ? 3 : state.currentRound === 5 ? 4 : Math.max(1, state.currentRound || 1);
         const roundBoost = Math.min(0.42, (displayRound - 1) * 0.14);
@@ -1642,9 +1214,8 @@ function startNextRound() {
     // Show round title card with instructions
     const isCoffeeShopRound = state.currentRound === 4;
     const isListenRound = state.currentRound === 5;
-    const isPongRound = state.currentRound === 6;
-    const isCafeRound = state.currentRound === 7;
-    const isShooterRound = state.currentRound === 3 || state.currentRound >= 8;
+    const isCafeRound = state.currentRound === 6;
+    const isShooterRound = state.currentRound === 3 || state.currentRound >= 7;
     
     if (isListenRound) {
         // Show special instructions for listen & match round
@@ -1684,17 +1255,6 @@ function startNextRound() {
             roundTitleOverlay.classList.remove('show');
             resetRoundTimer();
             setupRound();
-        });
-    } else if (isPongRound) {
-        roundTitleOverlay.classList.add('show');
-        roundTitleText.textContent = `Round ${frenchRoundNumber(state.currentRound)} - Conversation Pong`;
-        roundTitleInstructions.innerHTML = '\u2190 \u2192 move paddle \u00b7 Space to load a reply \u00b7 Space again to launch!<br><br><span style="color:#1a5c2a;font-weight:600;">\u2705 Multiple correct replies \u00b7 Speed increases with each match!</span>';
-        setupRound();
-        runCountdown(() => {
-            roundTitleOverlay.classList.remove('show');
-            resetRoundTimer();
-            startRoundTimer();
-            // No spawning needed - pong handles its own loop
         });
     } else if (isCoffeeShopRound) {
         // Show special instructions for coffee shop round
@@ -1774,8 +1334,8 @@ function skipRound(direction = 1) {
     // Show round title card with instructions
     const isCoffeeShopRound2 = state.currentRound === 4;
     const isListenRound2 = state.currentRound === 5;
-    const isPongRound2 = state.currentRound === 6;
-    const isShooterRound2 = state.currentRound === 3 || state.currentRound >= 8;
+    const isCafeRound2 = state.currentRound === 6;
+    const isShooterRound2 = state.currentRound === 3 || state.currentRound >= 7;
     
     if (isListenRound2) {
         console.log('R5 (skip): Showing title overlay');
@@ -1802,15 +1362,14 @@ function skipRound(direction = 1) {
                 console.log('R5 (skip): After 1s - cards in state:', state.cards.length, 'DOM cards:', gameArea.querySelectorAll('.card').length);
             }, 1000);
         }, skipImmediate);
-    } else if (isPongRound2) {
+    } else if (isCafeRound2) {
         roundTitleOverlay.classList.add('show');
-        roundTitleText.textContent = `Round ${frenchRoundNumber(state.currentRound)} - Conversation Pong`;
-        roundTitleInstructions.innerHTML = '\u2190 \u2192 move paddle \u00b7 Space to load a reply \u00b7 Space again to launch!<br><br><span style="color:#1a5c2a;font-weight:600;">\u2705 Multiple correct replies \u00b7 Speed increases with each match!</span>';
-        setupRound();
+        roundTitleText.textContent = `Round ${frenchRoundNumber(state.currentRound)} - Le Café`;
+        roundTitleInstructions.textContent = 'Écoutez les clients et servez les bonnes commandes!';
         runCountdown(() => {
             roundTitleOverlay.classList.remove('show');
             resetRoundTimer();
-            startRoundTimer();
+            setupRound();
         }, skipImmediate);
     } else if (isCoffeeShopRound2) {
         // Show special instructions for coffee shop round
@@ -2916,10 +2475,8 @@ function update(currentTime) {
     if (!state.paused) {
         updateCards(deltaTime);
         
-        // Update paddle/pong mode
-        if (state.pongMode) {
-            updatePongMode(deltaTime);
-        } else if (state.shooterMode) {
+        // Update paddle mode
+        if (state.shooterMode) {
             updatePaddleMode(deltaTime);
         }
     }
@@ -3685,23 +3242,6 @@ function removeCard(card) {
 // KEYBOARD
 // ============================================
 function handleKeydown(e) {
-    // Pong mode controls
-    if (state.pongMode && !state.paused) {
-        if (e.key === 'ArrowLeft') {
-            e.preventDefault();
-            state.paddleMoving.left = true;
-            return;
-        } else if (e.key === 'ArrowRight') {
-            e.preventDefault();
-            state.paddleMoving.right = true;
-            return;
-        } else if (e.key === ' ') {
-            e.preventDefault();
-            pongSpaceBar();
-            return;
-        }
-    }
-
     // Paddle mode controls
     if (state.shooterMode && !state.paused) {
         if (e.key === 'ArrowLeft') {
@@ -3746,7 +3286,7 @@ function handleKeydown(e) {
 }
 
 function handleKeyup(e) {
-    if (state.shooterMode || state.pongMode) {
+    if (state.shooterMode) {
         if (e.key === 'ArrowLeft') state.paddleMoving.left = false;
         if (e.key === 'ArrowRight') state.paddleMoving.right = false;
     }

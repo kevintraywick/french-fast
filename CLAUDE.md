@@ -24,23 +24,19 @@ Vanilla JS French vocabulary game. No framework, no build step needed (uses Vite
 | 3 | Trois | Breakout! | Paddle + bouncing emojis (`shooterMode`) |
 | 4 | Quatre | Au Café | Coffee shop matching |
 | 5 | Cinq | Tell Me About It | Listen & match (`listenMode`) |
-| 6 | Six | Conversation Pong | Missile launch pong (`pongMode`) |
+| 6 | Six | Le Café | Café ordering game (`cafeMode`) |
 
 ## Key Architecture
 - **`state`** object: single source of truth for all game state
-- **`pongState`** object: L6-specific state (phraseY, missileX/Y, convIndex, etc.)
 - **Game loop**: `requestAnimationFrame` → `update(currentTime)` → `deltaTime` normalized
 - **Round setup**: `setupRound()` dispatches by `state.currentRound` → sets mode flags
 - **Physics paths**:
   - Non-breakout cards (R1/2/4/5): `updateCards()` → AABB collision, restitution 0.88, no gravity
   - Breakout emojis (R3): `updatePaddleMode()` → circle collision, restitution 0.92
-  - L6 missile: straight upward, no bounce
 - **`velocityMultiplier`**: always `1.0` — don't change to 0.2 for breakout (was a Codex bug)
 
 ## Key Functions
 - `setupRound()` — initializes round, dispatches to mode-specific setup
-- `setupPongRound()` — L6 setup; calls `loadPongConversation(0, false)` (false = no auto-speak on start)
-- `loadPongConversation(index, speak=true)` — loads next L6 phrase; speak=false suppresses auto TTS
 - `frenchRoundNumber(n)` — returns French word for round number (Un, Deux... all 1-20)
 - `startNextRound()` / `skipRound(direction)` — round navigation
 - `togglePause()` — instant resume (no countdown); countdown only on round start/skip
