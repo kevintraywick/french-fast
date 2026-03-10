@@ -1606,8 +1606,6 @@ function getSpawnPosition() {
         const targetSpeed = 0.82 + roundBoost + Math.random() * 1.92;
         vx = (vx / baseMag) * targetSpeed;
         vy = (vy / baseMag) * targetSpeed;
-        // Round 1: +20% speed for more chaotic feel
-        if (state.currentRound === 1) { vx *= 1.2; vy *= 1.2; }
     }
 
     return { x, y, vx, vy };
@@ -2999,8 +2997,9 @@ function updateCards(deltaTime) {
                 card.speedVariance = 0.88 + Math.random() * 0.48;
             }
             const speed = Math.hypot(card.vx, card.vy);
-            const minSpeed = 0.7 * card.speedVariance;
-            const maxSpeed = 2.55 * card.speedVariance;
+            const roundSpeedFactor = state.currentRound === 1 ? 1.2 : 1.0;
+            const minSpeed = 0.7  * card.speedVariance * roundSpeedFactor;
+            const maxSpeed = 2.55 * card.speedVariance * roundSpeedFactor;
             if (speed < minSpeed) {
                 if (speed < 0.0001) {
                     const angle = Math.random() * Math.PI * 2;
