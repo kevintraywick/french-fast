@@ -2979,15 +2979,12 @@ function updateCards(deltaTime, now) {
             }
         } else {
             // Free-bounce card physics for rounds 1/2/4/5: no gravity, preserve motion
-            card.vx *= 0.998;
-            card.vy *= 0.998;
-
             if (card.speedVariance == null) {
                 card.speedVariance = 0.88 + Math.random() * 0.48;
             }
             const speed = Math.hypot(card.vx, card.vy);
             const roundSpeedFactor = state.currentRound === 1 ? 1.2 : 1.0;
-            const minSpeed = 0.7  * card.speedVariance * roundSpeedFactor;
+            const minSpeed = 0.84 * card.speedVariance * roundSpeedFactor;
             const baseMaxSpeed = 2.55 * card.speedVariance * roundSpeedFactor;
             const isBoosted = card.boostUntil && now < card.boostUntil;
             const maxSpeed = isBoosted ? baseMaxSpeed * 2.0 : baseMaxSpeed;
