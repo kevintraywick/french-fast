@@ -1606,6 +1606,8 @@ function getSpawnPosition() {
         const targetSpeed = 0.82 + roundBoost + Math.random() * 1.92;
         vx = (vx / baseMag) * targetSpeed;
         vy = (vy / baseMag) * targetSpeed;
+        // Round 1: +20% speed for more chaotic feel
+        if (state.currentRound === 1) { vx *= 1.2; vy *= 1.2; }
     }
 
     return { x, y, vx, vy };
