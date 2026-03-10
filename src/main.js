@@ -904,8 +904,8 @@ function startGame() {
     {
         validationOverlay.classList.add('show');
         validationText.textContent = 'Match the Pairs';
-        validationSubtitle.textContent = "(Don't forget to enable audio and select a voice)";
-        validationSubtitle.style.display = 'block';
+        validationSubtitle.textContent = '';
+        validationSubtitle.style.display = 'none';
         validationStatus.textContent = '';
         
         // Setup round in background
@@ -1593,7 +1593,7 @@ function getSpawnPosition() {
         const baseMag = Math.hypot(vx, vy) || 1;
         const displayRound = state.currentRound === 4 ? 3 : state.currentRound === 5 ? 4 : Math.max(1, state.currentRound || 1);
         const roundBoost = Math.min(0.42, (displayRound - 1) * 0.14);
-        const targetSpeed = 0.82 + roundBoost + Math.random() * 1.92;
+        const targetSpeed = (0.82 + roundBoost + Math.random() * 1.92) * 1.2;
         vx = (vx / baseMag) * targetSpeed;
         vy = (vy / baseMag) * targetSpeed;
     }
@@ -2985,7 +2985,7 @@ function updateCards(deltaTime, now) {
             const speed = Math.hypot(card.vx, card.vy);
             const roundSpeedFactor = state.currentRound === 1 ? 1.2 : 1.0;
             const minSpeed = 0.84 * card.speedVariance * roundSpeedFactor;
-            const baseMaxSpeed = 2.55 * card.speedVariance * roundSpeedFactor;
+            const baseMaxSpeed = (2.55 + 3) * card.speedVariance * roundSpeedFactor;
             const isBoosted = card.boostUntil && now < card.boostUntil;
             const maxSpeed = isBoosted ? baseMaxSpeed * 2.0 : baseMaxSpeed;
             if (speed < minSpeed) {
@@ -3025,7 +3025,7 @@ function updateCards(deltaTime, now) {
             }
             if (wallBounced) {
                 const spd = Math.hypot(card.vx, card.vy);
-                const boostedSpd = Math.min(spd * 1.05, baseMaxSpeed * 2.0);
+                const boostedSpd = Math.min(spd * 1.1, baseMaxSpeed * 2.0);
                 if (spd > 0) {
                     card.vx = (card.vx / spd) * boostedSpd;
                     card.vy = (card.vy / spd) * boostedSpd;
