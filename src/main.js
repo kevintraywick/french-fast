@@ -361,7 +361,7 @@ const state = {
     maxCards: 50,
 
     // Round sizing
-    roundBasePairs: 25,
+    roundBasePairs: 15,
     roundIncrement: 5,
     roundMaxPairs: 50,
 
@@ -921,7 +921,7 @@ function startGame() {
             // Fallback: force a minimal, safe Round 1 so the game can start
             try {
                 const basePool = VOCABULARY.filter(w => !w.tags || (!w.tags.includes('number') && !w.tags.includes('color')));
-                state.roundWords = basePool.slice(0, 25).map(w => ({
+                state.roundWords = basePool.slice(0, 15).map(w => ({
                     ...w,
                     key: normalizeFrench(w.french)
                 }));
@@ -1354,7 +1354,7 @@ return state.roundWords.length > 0;
             }
         }
 
-        state.roundWords = finalWords.slice(0, 25).map(w => ({
+        state.roundWords = finalWords.slice(0, 15).map(w => ({
             ...w,
             key: normalizeFrench(w.french)
         }));
@@ -1443,7 +1443,7 @@ key: normalizeFrench(w.french)
     if (state.roundWords.length === 0) {
 // Defensive fallback if filtering removed everything
 const basePool = VOCABULARY.filter(w => !w.tags || (!w.tags.includes('number') && !w.tags.includes('color')));
-state.roundWords = basePool.slice(0, Math.min(25, basePool.length)).map(w => ({
+state.roundWords = basePool.slice(0, Math.min(15, basePool.length)).map(w => ({
     ...w,
     key: normalizeFrench(w.french)
 }));
