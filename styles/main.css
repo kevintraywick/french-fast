@@ -455,6 +455,18 @@ body {
     font-variant-numeric: tabular-nums;
 }
 
+/* ── New Words flash ── */
+#new-words-flash {
+    font-size: 13px;
+    font-weight: 700;
+    color: #2e7d32;
+    white-space: nowrap;
+    visibility: hidden;
+}
+body.dark-mode #new-words-flash {
+    color: #81c784;
+}
+
 /* ── Score (breakout, hidden otherwise) ── */
 #top-score {
     font-size: 26px;

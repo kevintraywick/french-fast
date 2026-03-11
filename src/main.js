@@ -364,6 +364,8 @@ const state = {
     roundBasePairs: 15,
     roundIncrement: 5,
     roundMaxPairs: 50,
+    matchTarget: 50,         // total pairs to match to complete the round
+    pairInjectPending: false,
 
     // Multi-step challenges
     roundChallenges: [],
@@ -1428,6 +1430,8 @@ key: normalizeFrench(w.french)
     state.matchedKeys.clear();
     state.wrongCounts = {};
     state.matchedSteps = 0;
+    state.matchTarget = 50;
+    state.pairInjectPending = false;
     state.spawnedEmojiIndices = [];
     state.spawnedWordIndices = [];
     state.activePairs.clear();
@@ -1836,14 +1840,12 @@ let timerTick = null;
 let roundElapsedMs = 0;
 
 function formatTime(ms) {
-    const totalTenths = Math.floor(ms / 100);
-    const tenths = totalTenths % 10;
-    const totalSeconds = Math.floor(totalTenths / 10);
+    const totalSeconds = Math.floor(ms / 1000);
     const seconds = totalSeconds % 60;
     const minutes = Math.floor(totalSeconds / 60);
     const mm = String(minutes).padStart(2, '0');
     const ss = String(seconds).padStart(2, '0');
-    return `${mm}:${ss}.${tenths}`;
+    return `${mm}:${ss}`;
 }
 
 function resetRoundTimer() {
@@ -1862,7 +1864,7 @@ function startRoundTimer() {
         roundElapsedMs += (now - roundStartPerf);
         roundStartPerf = now;
         if (timerValueEl) timerValueEl.textContent = formatTime(roundElapsedMs);
-    }, 100);
+    }, 1000);
 }
 
 function stopRoundTimer() {
@@ -2166,12 +2168,14 @@ function shouldIncludeWord(frenchWord) {
 function updateCardCount() {
     const totalBase = state.roundWords.length;
     const totalChallenges = state.roundChallenges ? state.roundChallenges.length : 0;
-    
+
     // In typing mode, icon mode, color mode, or shooter mode, each word is one step. Otherwise it's base pairs + challenge steps
     const totalSteps = (state.typingMode || state.iconMode || state.colorMode || state.comboMode || state.shooterMode || state.listenMode) ? totalBase : (totalBase + (totalChallenges * 2));
 
     matchedCountEl.textContent = state.matchedSteps;
-    totalCountEl.textContent = totalSteps;
+    // For normal matching rounds use the matchTarget (50) as the displayed total
+    const isNormalRound = !state.typingMode && !state.iconMode && !state.colorMode && !state.comboMode && !state.shooterMode && !state.listenMode && !state.phraseMode && !state.cafeMode && !state.pongMode;
+    totalCountEl.textContent = (isNormalRound && state.matchTarget) ? state.matchTarget : totalSteps;
 }
 
 function showNextIcon() {
@@ -3556,10 +3560,89 @@ checkRoundComplete();
 }
 
 
+function playChime() {
+    if (!audioUnlocked) return;
+    try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const notes = [523, 659, 784, 1047]; // C5, E5, G5, C6
+        notes.forEach((freq, i) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.frequency.value = freq;
+            osc.type = 'sine';
+            const t = ctx.currentTime + i * 0.14;
+            gain.gain.setValueAtTime(0, t);
+            gain.gain.linearRampToValueAtTime(0.25, t + 0.04);
+            gain.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
+            osc.start(t);
+            osc.stop(t + 0.5);
+        });
+    } catch (e) {}
+}
+
+function flashNewWords() {
+    const el = document.getElementById('new-words-flash');
+    if (!el) return;
+    el.textContent = '✨ New Words!';
+    let count = 0;
+    const toggle = setInterval(() => {
+        el.style.visibility = el.style.visibility === 'hidden' ? 'visible' : 'hidden';
+        count++;
+        if (count >= 6) { // 3 flashes = 6 toggles
+            clearInterval(toggle);
+            el.style.visibility = 'hidden';
+        }
+    }, 300);
+}
+
+function injectNewPairs() {
+    if (state.pairInjectPending) return;
+    state.pairInjectPending = true;
+
+    const usedKeys = new Set(state.roundWords.map(w => w.key));
+    const toAdd = Math.min(5, state.matchTarget - state.roundWords.length);
+    if (toAdd <= 0) { state.pairInjectPending = false; return; }
+
+    const pool = VOCABULARY.filter(w => (w.emoji || w.color) && w.french && !usedKeys.has(normalizeFrench(w.french)));
+    const shuffled = [...pool].sort(() => Math.random() - 0.5);
+    const newWords = shuffled.slice(0, toAdd).map(w => ({ ...w, key: normalizeFrench(w.french) }));
+
+    if (newWords.length === 0) { state.pairInjectPending = false; return; }
+
+    const startIdx = state.roundWords.length;
+    state.roundWords.push(...newWords);
+
+    // Spawn the new pairs immediately
+    for (let i = startIdx; i < state.roundWords.length; i++) {
+        const wordData = state.roundWords[i];
+        if (wordData && wordData.itemType === 'color') {
+            spawnColorDiscAt(i);
+        } else {
+            spawnEmojiCardAt(i);
+        }
+        spawnWordCardAt(i);
+    }
+
+    flashNewWords();
+    playChime();
+    state.pairInjectPending = false;
+}
+
 function checkRoundComplete() {
     const totalBase = state.roundWords.length;
     const totalChallenges = state.roundChallenges ? state.roundChallenges.length : 0;
-    const totalSteps = (state.typingMode || state.colorMode || state.comboMode || state.shooterMode || state.listenMode) ? totalBase : (totalBase + (totalChallenges * 2));
+    const isNormalRound = !state.typingMode && !state.colorMode && !state.comboMode && !state.shooterMode && !state.listenMode && !state.phraseMode && !state.cafeMode && !state.pongMode;
+    const totalSteps = isNormalRound ? state.matchTarget : ((state.typingMode || state.colorMode || state.comboMode || state.shooterMode || state.listenMode) ? totalBase : (totalBase + (totalChallenges * 2)));
+
+    // Check if new pairs should be injected (normal rounds only)
+    if (isNormalRound && state.matchedSteps < state.matchTarget) {
+        const remaining = state.roundWords.length - state.matchedSteps;
+        if (remaining <= 10 && state.roundWords.length < state.matchTarget) {
+            injectNewPairs();
+        }
+    }
 
     if (state.matchedSteps >= totalSteps) {
 if (state.spawnInterval) {
