@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Hex Grid Prototype</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #1a1a2e;
+    overflow: hidden;
+    font-family: monospace;
+    color: #eee;
+  }
+  canvas {
+    cursor: pointer;
+    display: block;
+  }
+  #info {
+    position: fixed;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 13px;
+    color: #aaa;
+    letter-spacing: 0.05em;
+    pointer-events: none;
+  }
+</style>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+<div id="info">hover or click a hex</div>
+
+<script>
+// ─── Hex math (pointy-top, axial coords) ────────────────────────────────────
+// radius = circumradius (center to corner)
+const R = 36; // ~dime-sized: 60px wide, 52px tall flat-to-flat
+
+// Pointy-top layout helpers
+const HEX_WIDTH  = Math.sqrt(3) * R;       // flat-to-flat distance
+const HEX_HEIGHT = 2 * R;                  // tip-to-tip distance
+const COL_STEP   = HEX_WIDTH;
+const ROW_STEP   = HEX_HEIGHT * 0.75;      // 3/4 height per row
+
+// Axial → pixel (center of hex)
+function hexToPixel(q, r, origin) {
+  const x = origin.x + HEX_WIDTH * (q + r / 2);
+  const y = origin.y + ROW_STEP * r;
+  return { x, y };
+}
+
+// Pixel → nearest axial hex
+function pixelToHex(px, py, origin) {
+  const x = px - origin.x;
+  const y = py - origin.y;
+  const q_f = (2/3 * x) / R  +  0;  // but we need to account for y
+  // fractional cube coords
+  const q_raw = (Math.sqrt(3)/3 * x  -  y/3) / R;
+  const r_raw = (2/3 * y) / R;
+  return cubeRound(q_raw, r_raw, -q_raw - r_raw);
+}
+
+function cubeRound(fq, fr, fs) {
+  let q = Math.round(fq);
+  let r = Math.round(fr);
+  let s = Math.round(fs);
+  const dq = Math.abs(q - fq);
+  const dr = Math.abs(r - fr);
+  const ds = Math.abs(s - fs);
+  if (dq > dr && dq > ds) q = -r - s;
+  else if (dr > ds) r = -q - s;
+  return { q, r };
+}
+
+// Corners of a pointy-top hex centered at (cx, cy)
+function hexCorners(cx, cy) {
+  const corners = [];
+  for (let i = 0; i < 6; i++) {
+    const angle = Math.PI / 180 * (60 * i - 30); // pointy-top
+    corners.push({
+      x: cx + R * Math.cos(angle),
+      y: cy + R * Math.sin(angle),
+    });
+  }
+  return corners;
+}
+
+// ─── Grid definition ─────────────────────────────────────────────────────────
+// Rebuilt on every resize to fill the canvas exactly
+let hexes = [];
+
+function buildGrid(w, h) {
+  hexes = [];
+  // Compute axial r range from pixel height
+  const rMin = Math.floor((-h / 2 - R) / ROW_STEP) - 1;
+  const rMax = Math.ceil ((  h / 2 + R) / ROW_STEP) + 1;
+  for (let r = rMin; r <= rMax; r++) {
+    // Pixel x offset for this row: HEX_WIDTH * r/2
+    const xOffset = HEX_WIDTH * (r / 2);
+    const qMin = Math.floor((-w / 2 - xOffset - R) / HEX_WIDTH) - 1;
+    const qMax = Math.ceil ((  w / 2 - xOffset + R) / HEX_WIDTH) + 1;
+    for (let q = qMin; q <= qMax; q++) {
+      hexes.push({ q, r });
+    }
+  }
+}
+
+// ─── Canvas setup ────────────────────────────────────────────────────────────
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+
+function resize() {
+  canvas.width  = window.innerWidth;
+  canvas.height = window.innerHeight;
+  buildGrid(canvas.width, canvas.height);
+  draw();
+}
+
+const origin = { x: 0, y: 0 }; // set in draw()
+
+// ─── Hex directions (pointy-top) ─────────────────────────────────────────────
+// Direction (0,1) moves down-right; (-1,1) moves down-left.
+// Alternating them gives a visually straight descent.
+const DIR_DOWN_RIGHT = { dq:  0, dr: 1 };
+const DIR_DOWN_LEFT  = { dq: -1, dr: 1 };
+
+// ─── Token ────────────────────────────────────────────────────────────────────
+const SPEED = 2.5; // hexes per second
+
+const token = {
+  q: 0, r: 0,       // current hex (axial)
+  nq: 0, nr: 0,     // next hex
+  t: 0,             // interpolation 0→1
+  step: 0,          // which step index (used to alternate directions)
+  px: 0, py: 0,     // current pixel position (interpolated)
+};
+
+function resetToken() {
+  // Start at q=0, topmost r in grid
+  const rMin = Math.min(...hexes.map(h => h.r));
+  token.q  = 0;
+  token.r  = rMin;
+  token.t  = 0;
+  token.step = 0;
+  advanceTarget();
+  // Snap px/py to start hex immediately
+  const p = hexToPixel(token.q, token.r, origin);
+  token.px = p.x;
+  token.py = p.y;
+}
+
+function advanceTarget() {
+  // Alternate directions so the path descends nearly vertically
+  const dir = (token.step % 2 === 0) ? DIR_DOWN_RIGHT : DIR_DOWN_LEFT;
+  token.nq = token.q + dir.dq;
+  token.nr = token.r + dir.dr;
+}
+
+// ─── State ───────────────────────────────────────────────────────────────────
+let hoveredHex = null;
+let selectedHex = null;
+let lastTime = null;
+
+// ─── Draw ─────────────────────────────────────────────────────────────────────
+const COLOR_DEFAULT  = '#2a3f6f';
+const COLOR_BORDER   = '#4a6fa5';
+const COLOR_HOVER    = '#3d5a9e';
+const COLOR_SELECTED = '#f0a500';
+const COLOR_LABEL    = '#8aafd4';
+
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  origin.x = canvas.width  / 2;
+  origin.y = canvas.height / 2;
+
+  for (const hex of hexes) {
+    const { x, y } = hexToPixel(hex.q, hex.r, origin);
+    const corners = hexCorners(x, y);
+
+    const isHovered  = hoveredHex  && hoveredHex.q  === hex.q && hoveredHex.r  === hex.r;
+    const isSelected = selectedHex && selectedHex.q === hex.q && selectedHex.r === hex.r;
+
+    // Fill
+    ctx.beginPath();
+    ctx.moveTo(corners[0].x, corners[0].y);
+    for (let i = 1; i < 6; i++) ctx.lineTo(corners[i].x, corners[i].y);
+    ctx.closePath();
+
+    ctx.fillStyle = isSelected ? COLOR_SELECTED : isHovered ? COLOR_HOVER : COLOR_DEFAULT;
+    ctx.fill();
+
+    // Border
+    ctx.strokeStyle = isSelected ? '#ffd54f' : COLOR_BORDER;
+    ctx.lineWidth   = isSelected ? 2 : 1;
+    ctx.stroke();
+
+    // Coord label (small, only when zoomed enough)
+    if (R >= 24) {
+      ctx.fillStyle = isSelected ? '#1a1a2e' : COLOR_LABEL;
+      ctx.font = `${Math.max(9, R * 0.35)}px monospace`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(`${hex.q},${hex.r}`, x, y);
+    }
+  }
+
+  // Draw token
+  ctx.beginPath();
+  ctx.arc(token.px, token.py, R * 0.72, 0, Math.PI * 2);
+  ctx.fillStyle = '#f0a500';
+  ctx.fill();
+}
+
+// ─── Interaction ──────────────────────────────────────────────────────────────
+function getHexAt(px, py) {
+  const { q, r } = pixelToHex(px, py, origin);
+  return hexes.find(h => h.q === q && h.r === r) || null;
+}
+
+canvas.addEventListener('mousemove', e => {
+  const rect = canvas.getBoundingClientRect();
+  const hex = getHexAt(e.clientX - rect.left, e.clientY - rect.top);
+  if (hex !== hoveredHex) {
+    hoveredHex = hex;
+    draw();
+    document.getElementById('info').textContent =
+      hex ? `q=${hex.q}  r=${hex.r}  s=${-hex.q - hex.r}` : 'hover or click a hex';
+  }
+});
+
+canvas.addEventListener('click', e => {
+  const rect = canvas.getBoundingClientRect();
+  const hex = getHexAt(e.clientX - rect.left, e.clientY - rect.top);
+  selectedHex = (hex && selectedHex && hex.q === selectedHex.q && hex.r === selectedHex.r)
+    ? null  // toggle off
+    : hex;
+  draw();
+});
+
+canvas.addEventListener('mouseleave', () => {
+  hoveredHex = null;
+  draw();
+  document.getElementById('info').textContent = 'hover or click a hex';
+});
+
+// ─── Animation loop ───────────────────────────────────────────────────────────
+function loop(ts) {
+  if (lastTime === null) lastTime = ts;
+  const dt = (ts - lastTime) / 1000;
+  lastTime = ts;
+
+  token.t += dt * SPEED;
+
+  if (token.t >= 1) {
+    token.t -= 1;
+    // Arrive at next hex
+    token.q = token.nq;
+    token.r = token.nr;
+    token.step++;
+
+    // If we've left the grid, reset to top
+    const onGrid = hexes.some(h => h.q === token.q && h.r === token.r);
+    if (!onGrid) resetToken();
+    else advanceTarget();
+  }
+
+  // Lerp pixel position
+  const from = hexToPixel(token.q,  token.r,  origin);
+  const to   = hexToPixel(token.nq, token.nr, origin);
+  token.px = from.x + (to.x - from.x) * token.t;
+  token.py = from.y + (to.y - from.y) * token.t;
+
+  draw();
+  requestAnimationFrame(loop);
+}
+
+window.addEventListener('resize', () => {
+  canvas.width  = window.innerWidth;
+  canvas.height = window.innerHeight;
+  buildGrid(canvas.width, canvas.height);
+  origin.x = canvas.width  / 2;
+  origin.y = canvas.height / 2;
+  // don't call draw() — loop handles it
+});
+
+resize();
+resetToken();
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>

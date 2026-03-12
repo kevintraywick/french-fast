@@ -901,7 +901,12 @@ function init() {
 function startGame() {
     loadProgress();
     updateProgressDisplay();
-    
+
+    const devRound = parseInt(new URLSearchParams(location.search).get('round'), 10);
+    if (devRound >= 1 && devRound <= 8) {
+        state.currentRound = devRound;
+    }
+
     // Show "Match the Pairs" screen immediately
     {
         validationOverlay.classList.add('show');
@@ -954,7 +959,7 @@ function startGame() {
 
             // Start spawning
             startSpawning();
-        });
+        }, !!devRound);
     }
 
     // Event listeners
