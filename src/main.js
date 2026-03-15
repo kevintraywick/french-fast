@@ -351,6 +351,7 @@ const state = {
     selectedCard: null,
     paused: false,
     velocityMultiplier: 1.0,
+    userSpeedMultiplier: 1.0,
 
     // Player identification
     playerId: null,
@@ -1064,8 +1065,21 @@ handleCardClick(id);
             try { localStorage.setItem('frenchfast_theme', isDark ? 'dark' : 'light'); } catch(e) {}
         });
     }
+
+    // Speed control
+    document.querySelectorAll('#speed-control input[type="radio"]').forEach(radio => {
+        radio.addEventListener('change', () => {
+            state.userSpeedMultiplier = parseFloat(radio.value);
+        });
+    });
 }
 
+function updateSpeedControlVisibility() {
+    const el = document.getElementById('speed-control');
+    if (!el) return;
+    const show = !state.shooterMode && !state.pongMode && !state.cafeMode;
+    el.classList.toggle('hidden', !show);
+}
 
 function setupRound() {
     // Update voice for this round (alternates Amelie/Thomas)
@@ -1158,6 +1172,7 @@ for (const m of state.missiles) {
                 }
             }
         });
+        updateSpeedControlVisibility();
         return true;
     }
 
@@ -1467,6 +1482,7 @@ state.roundChallenges = [];
 function startSpawning() {
     let pairIndex = 0;
     console.log('startSpawning called - modes:', { listen: state.listenMode, typing: state.typingMode, color: state.colorMode, icon: state.iconMode, phrase: state.phraseMode, shooter: state.shooterMode }, 'roundWords:', state.roundWords.length);
+    updateSpeedControlVisibility();
 
     state.spawnInterval = setInterval(() => {
 if (state.paused) return;
@@ -1602,7 +1618,7 @@ function getSpawnPosition() {
         const baseMag = Math.hypot(vx, vy) || 1;
         const displayRound = state.currentRound === 4 ? 3 : state.currentRound === 5 ? 4 : Math.max(1, state.currentRound || 1);
         const roundBoost = Math.min(0.42, (displayRound - 1) * 0.14);
-        const targetSpeed = (0.82 + roundBoost + Math.random() * 1.92) * 1.2;
+        const targetSpeed = (0.82 + roundBoost + Math.random() * 1.92) * 1.2 * state.userSpeedMultiplier;
         vx = (vx / baseMag) * targetSpeed;
         vy = (vy / baseMag) * targetSpeed;
     }
@@ -2993,8 +3009,8 @@ function updateCards(deltaTime, now) {
             }
             const speed = Math.hypot(card.vx, card.vy);
             const roundSpeedFactor = state.currentRound === 1 ? 1.2 : 1.0;
-            const minSpeed = 0.84 * card.speedVariance * roundSpeedFactor;
-            const baseMaxSpeed = (2.55 + 3) * card.speedVariance * roundSpeedFactor;
+            const minSpeed = 0.84 * card.speedVariance * roundSpeedFactor * state.userSpeedMultiplier;
+            const baseMaxSpeed = (2.55 + 3) * card.speedVariance * roundSpeedFactor * state.userSpeedMultiplier;
             const isBoosted = card.boostUntil && now < card.boostUntil;
             const maxSpeed = isBoosted ? baseMaxSpeed * 2.0 : baseMaxSpeed;
             if (speed < minSpeed) {
@@ -3124,7 +3140,7 @@ function updateCards(deltaTime, now) {
                 const spdA = Math.hypot(a.vx, a.vy);
                 if (spdA > 0) {
                     const roundSFA = state.currentRound === 1 ? 1.2 : 1.0;
-                    const baseMaxA = 2.55 * a.speedVariance * roundSFA;
+                    const baseMaxA = 2.55 * a.speedVariance * roundSFA * state.userSpeedMultiplier;
                     const boostedSpdA = Math.min(spdA * 1.05, baseMaxA * 2.0);
                     a.vx = (a.vx / spdA) * boostedSpdA;
                     a.vy = (a.vy / spdA) * boostedSpdA;
@@ -3137,7 +3153,7 @@ function updateCards(deltaTime, now) {
                 const spdB = Math.hypot(b.vx, b.vy);
                 if (spdB > 0) {
                     const roundSFB = state.currentRound === 1 ? 1.2 : 1.0;
-                    const baseMaxB = 2.55 * b.speedVariance * roundSFB;
+                    const baseMaxB = 2.55 * b.speedVariance * roundSFB * state.userSpeedMultiplier;
                     const boostedSpdB = Math.min(spdB * 1.05, baseMaxB * 2.0);
                     b.vx = (b.vx / spdB) * boostedSpdB;
                     b.vy = (b.vy / spdB) * boostedSpdB;
