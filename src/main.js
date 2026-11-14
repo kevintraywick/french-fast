@@ -1487,12 +1487,12 @@ state.roundMaxPairs
     const numberPool = VOCABULARY.filter(w => w.tags && w.tags.includes('number'));
     const colorPool = VOCABULARY.filter(w => w.tags && w.tags.includes('color'));
 
-    // Round 1 runs in drift mode: pictures + words only (numbers and colours
-    // are saved for their own rounds), with the whole round's words chosen up
-    // front and fed onto the board a few pairs at a time.
-    state.driftMode = state.currentRound === 1;
+    // Rounds 1 and 2 run in drift mode: pictures + words only (numbers and
+    // colours are saved for their own rounds), with the whole round's words
+    // chosen up front and fed onto the board a few pairs at a time.
+    state.driftMode = state.currentRound <= 2;
     document.body.classList.toggle('drift-mode', state.driftMode);
-    if (state.driftMode) targetPairs = DRIFT_ROUND_PAIRS;
+    if (state.driftMode) targetPairs = DRIFT_ROUND_PAIRS[state.currentRound];
 
     let pool = state.driftMode
         ? [...basePool]
@@ -1506,7 +1506,17 @@ state.roundMaxPairs
 
     // Accept items with emoji OR color
     const validPairs = effectivePool.filter(w => (w.emoji || w.color) && w.french);
-    const shuffled = [...validPairs].sort(() => Math.random() - 0.5);
+    let shuffled = [...validPairs].sort(() => Math.random() - 0.5);
+
+    // Round 2 (La Mémoire): up to a quarter of the round is review — words the
+    // player has matched before but not yet learned — and the rest is new.
+    if (state.driftMode && state.currentRound === 2) {
+        const seen = (w) => !!state.wordProgress[normalizeFrench(w.french)];
+        const review = shuffled.filter(seen).slice(0, Math.round(targetPairs * DRIFT_REVIEW_SHARE));
+        const fresh = shuffled.filter(w => !seen(w));
+        const rest = shuffled.filter(w => seen(w) && !review.includes(w));
+        shuffled = [...review, ...fresh, ...rest];
+    }
     const candidates = shuffled.slice(0, Math.min(targetPairs * 2, shuffled.length));
 
     const visualSet = new Set();
@@ -1523,6 +1533,7 @@ validatedPairs.push(pair);
     }
 
     state.roundWords = validatedPairs.slice(0, Math.min(targetPairs, validatedPairs.length));
+    if (state.driftMode) state.roundWords.sort(() => Math.random() - 0.5);  // mix review in with new
     state.roundChallenges = [];
 
     // Add key property to each word for matching
@@ -1534,12 +1545,14 @@ key: normalizeFrench(w.french)
     state.matchedKeys.clear();
     state.wrongCounts = {};
     state.matchedSteps = 0;
-    state.matchTarget = state.driftMode ? Math.min(DRIFT_ROUND_PAIRS, state.roundWords.length) : 50;
+    state.matchTarget = state.driftMode ? Math.min(targetPairs, state.roundWords.length) : 50;
     state.pairInjectPending = false;
     if (state.driftMode) {
         driftBounds = null;
         preloadIcons(state.roundWords);
-        validationSubtitle.textContent = 'Pick a picture, then its French word. Take your time.';
+        validationSubtitle.textContent = state.currentRound === 1
+            ? 'Pick a picture, then its French word. Take your time.'
+            : 'New words, plus a few you have met before. Take your time.';
         validationSubtitle.style.display = '';
     }
     state.spawnedEmojiIndices = [];
@@ -1640,7 +1653,9 @@ if (pairIndex >= state.roundWords.length) {
 
 
 // ---- Drift mode (Round 1) -------------------------------------------------
-const DRIFT_ROUND_PAIRS = 25;   // matches needed to finish Round 1
+const DRIFT_ROUND_PAIRS = { 1: 25, 2: 50 };   // matches needed to finish each drift round
+const DRIFT_BOARD_PAIRS = { 1: 8, 2: 10 };    // most pairs on the board at once
+const DRIFT_REVIEW_SHARE = 0.25;              // Round 2: share of words carried over as review
 let driftBounds = null;
 
 function getDriftBounds() {
@@ -1659,7 +1674,7 @@ function startDriftSpawning() {
     if (state.spawnInterval) return;
     state.spawnInterval = setInterval(() => {
         if (state.paused) return;
-        const full = driftPairsOnBoard() >= driftCapacity(getDriftBounds());
+        const full = driftPairsOnBoard() >= driftCapacity(getDriftBounds(), DRIFT_BOARD_PAIRS[state.currentRound]);
         if (full || state.driftNextIndex >= state.roundWords.length) {
             clearInterval(state.spawnInterval);
             state.spawnInterval = null;
@@ -1858,7 +1873,6 @@ function startNextRound() {
             resetRoundTimer();
             setupRound();
         });
-    } else if (isPongRound) {
     } else if (isCoffeeShopRound) {
         // Show special instructions for coffee shop round
         roundTitleOverlay.classList.add('show');
@@ -3667,7 +3681,7 @@ if (!quant) {
 state.selectedCard = card;
 card.frozen = true;
 card.element.classList.add('selected');
-// Round 1: a word tile says itself when picked, so the player hears it before matching
+// Drift rounds: a word tile says itself when picked, so the player hears it before matching
 if (state.driftMode && card.type === 'word') speakFrench(card.wordData.french);
     } else if (state.selectedCard.id === cardId) {
 state.selectedCard.frozen = false;

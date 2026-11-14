@@ -32,22 +32,24 @@ Vanilla JS French vocabulary game. No framework, no build step needed (uses Vite
 - **Game loop**: `requestAnimationFrame` → `update(currentTime)` → `deltaTime` normalized
 - **Round setup**: `setupRound()` dispatches by `state.currentRound` → sets mode flags
 - **Physics paths**:
-  - Non-breakout cards (R1/2/4/5): `updateCards()` → AABB collision, restitution 0.88, no gravity
+  - Drift rounds (R1/2): `updateCards()` → `stepDrift()`, no collisions or bouncing (see below)
+  - Other card rounds (R4/5): `updateCards()` → AABB collision, restitution 0.88, no gravity
   - Breakout emojis (R3): `updatePaddleMode()` → circle collision, restitution 0.92
   - L6 missile: straight upward, no bounce
 - **`velocityMultiplier`**: always `1.0` — don't change to 0.2 for breakout (was a Codex bug)
 
-## Round 1 — Drift Mode (added 2026-11)
-Round 1 no longer uses the ricochet physics. `state.driftMode` (true only when `currentRound === 1`) switches it to calm floating tiles:
+## Rounds 1–2 — Drift Mode (added 2026-11)
+Rounds 1 and 2 no longer use the ricochet physics. `state.driftMode` (true when `currentRound <= 2`) switches them to calm floating tiles:
 - **Physics**: `src/rounds/drift.js` — `stepDrift()` is called from `updateCards()`; tuning constants live in the `DRIFT` object (cruise 22 px/s at Medium). No bouncing, no speed boosts.
 - **Easy clicking**: the tile under the mouse stops; once a tile is selected the whole board slows to 28%.
-- **Board size**: 4–8 pairs on screen (`driftCapacity`), refilled one pair per match by `startDriftSpawning()`. Round ends at 25 matches (`DRIFT_ROUND_PAIRS`); all 25 words are chosen up front — `injectNewPairs()` is not used in R1.
-- **Audio**: a word tile speaks its French when picked (R1 only), in addition to the pronunciation on every correct match.
-- **Vocabulary**: pictures + words only; numbers and colours are excluded from R1.
+- **Round length**: `DRIFT_ROUND_PAIRS` — R1 ends at 25 matches, R2 at 50. All round words are chosen up front; `injectNewPairs()` is not used.
+- **Board size**: 4 to `DRIFT_BOARD_PAIRS` pairs on screen (R1 max 8, R2 max 10, fewer on small screens), refilled one pair per match by `startDriftSpawning()`.
+- **R2 vocabulary mix**: up to 25% (`DRIFT_REVIEW_SHARE`) words matched before but not yet learned, the rest never-matched words; learned words keep their 1-in-10 chance.
+- **Audio**: a word tile speaks its French when picked, in addition to the pronunciation on every correct match.
+- **Vocabulary**: pictures + words only; numbers and colours are excluded from R1 and R2.
 - **Positioning**: drift tiles use the CSS `translate` property (not left/top), so `transform` stays free for hover/pop animations.
-- **Styling**: everything under `body.drift-mode` in `styles/main.css` ("pool" palette, Bricolage Grotesque). The timer and the right-edge progress bar are hidden in R1 by CSS only.
+- **Styling**: everything under `body.drift-mode` in `styles/main.css` ("pool" palette, Bricolage Grotesque). The timer and the right-edge progress bar are hidden in drift rounds by CSS only.
 - **Icons**: vocabulary pictures are Fluent Emoji SVGs in `public/icons/`, built by `npm run icons` (`tools/build-icons.mjs`) — rerun after adding emoji to VOCABULARY. `createIcon()` falls back to the system emoji. Top-bar icons are inline SVG (`UI_ICONS`).
-- Round 2 still uses the old physics and card styling.
 
 ## Key Functions
 - `setupRound()` — initializes round, dispatches to mode-specific setup

@@ -1,7 +1,7 @@
 // ============================================
-// DRIFT — calm tile motion for Round 1
+// DRIFT — calm tile motion for Rounds 1 and 2
 // ============================================
-// Replaces the ricochet physics on the first matching round. Tiles float
+// Replaces the ricochet physics on the two picture-matching rounds. Tiles float
 // like things on still water: slow, wandering, never bouncing. Three rules
 // keep the round easy to play:
 //   1. Tiles cruise slowly and steer around each other instead of colliding.
@@ -161,7 +161,7 @@ export function stepDrift(cards, bounds, dtRaw, opts) {
 }
 
 // How many pairs fit comfortably on a board this size.
-export function driftCapacity(bounds) {
+export function driftCapacity(bounds, maxPairs = 8) {
     const pairs = Math.floor((bounds.w * bounds.h) / 85000);
-    return Math.max(4, Math.min(8, pairs));
+    return Math.max(4, Math.min(maxPairs, pairs));
 }
