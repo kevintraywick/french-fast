@@ -6,7 +6,7 @@
     <title>French Fast</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:ital,opsz,wght@0,9..40,300..700;1,9..40,300..700&family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=DM+Mono:wght@400;500&family=DM+Sans:ital,opsz,wght@0,9..40,300..700;1,9..40,300..700&family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="./styles/main.css">
 </head>
 <body>
@@ -14,27 +14,26 @@
         <div id="top-bar">
             <div class="top-bar-left">
                 <div id="round-display">
-                    <button id="prev-round-btn" title="Previous round">⏮</button>
+                    <button id="prev-round-btn" title="Previous round" aria-label="Previous round"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m14.5 6-6 6 6 6"/></svg></button>
                     <span id="round-label">Round <span id="round-number">1</span><span id="round-theme"></span></span>
-                    <button id="skip-round-btn" title="Skip to next round">⏭</button>
+                    <button id="skip-round-btn" title="Skip to next round" aria-label="Next round"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m9.5 6 6 6-6 6"/></svg></button>
                 </div>
-                <div id="round-timer">⏱ <span id="timer-value">00:00</span></div>
-                <div id="match-counter">Pairs Matched: <span id="matched-count">0</span>/<span id="total-count">50</span></div>
+                <div id="round-timer"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="7.5"/><path d="M12 9v4l2.5 2M9.5 2.5h5"/></svg><span id="timer-value">00:00</span></div>
+                <div id="match-counter"><div id="match-progress"><i></i></div><span><span id="matched-count">0</span> / <span id="total-count">50</span> pairs</span></div>
                 <div id="new-words-flash"></div>
             </div>
-            <div id="speed-control" class="hidden">
-                <span class="speed-label">Speed:</span>
-                <label class="speed-btn" title="Slow"><input type="radio" name="speed" value="0.5"> 🐢</label>
-                <label class="speed-btn" title="Medium"><input type="radio" name="speed" value="1.0" checked> 🐕</label>
-                <label class="speed-btn" title="Fast"><input type="radio" name="speed" value="2.0"> 🐆</label>
+            <div id="speed-control" class="hidden" role="radiogroup" aria-label="Speed">
+                <label class="speed-btn" title="Slow"><input type="radio" name="speed" value="0.5" aria-label="Slow"><img src="./icons/1f422.svg" alt=""></label>
+                <label class="speed-btn" title="Medium"><input type="radio" name="speed" value="1.0" aria-label="Medium" checked><img src="./icons/1f407.svg" alt=""></label>
+                <label class="speed-btn" title="Fast"><input type="radio" name="speed" value="2.0" aria-label="Fast"><img src="./icons/1f406.svg" alt=""></label>
             </div>
             <div class="top-bar-right">
                 <span id="top-score">0</span>
                 <div id="voice-control">
-                    <button id="voice-test-btn" title="Toggle audio">🔊</button>
+                    <button id="voice-test-btn" title="Toggle sound"></button>
                 </div>
-                <button id="theme-toggle-btn" title="Toggle dark/light mode">🌙</button>
-                <button id="pause-btn">Pause</button>
+                <button id="theme-toggle-btn" title="Toggle dark/light mode" aria-label="Toggle dark mode"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M19.5 14.2A8 8 0 0 1 9.8 4.5a8 8 0 1 0 9.7 9.7z"/></svg></button>
+                <button id="pause-btn"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 5.5v13m7-13v13"/></svg><span>Pause</span></button>
             </div>
         </div>
         

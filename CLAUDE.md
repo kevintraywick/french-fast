@@ -37,6 +37,17 @@ Vanilla JS French vocabulary game. No framework, no build step needed (uses Vite
   - L6 missile: straight upward, no bounce
 - **`velocityMultiplier`**: always `1.0` — don't change to 0.2 for breakout (was a Codex bug)
 
+## Round 1 — Drift Mode (added 2026-11)
+Round 1 no longer uses the ricochet physics. `state.driftMode` (true only when `currentRound === 1`) switches it to calm floating tiles:
+- **Physics**: `src/rounds/drift.js` — `stepDrift()` is called from `updateCards()`; tuning constants live in the `DRIFT` object (cruise 22 px/s at Medium). No bouncing, no speed boosts.
+- **Easy clicking**: the tile under the mouse stops; once a tile is selected the whole board slows to 28%.
+- **Board size**: 4–8 pairs on screen (`driftCapacity`), refilled one pair per match by `startDriftSpawning()`. All 50 round words are chosen up front — `injectNewPairs()` is not used in R1.
+- **Vocabulary**: pictures + words only; numbers and colours are excluded from R1.
+- **Positioning**: drift tiles use the CSS `translate` property (not left/top), so `transform` stays free for hover/pop animations.
+- **Styling**: everything under `body.drift-mode` in `styles/main.css` ("pool" palette, Bricolage Grotesque). The timer and the right-edge progress bar are hidden in R1 by CSS only.
+- **Icons**: vocabulary pictures are Fluent Emoji SVGs in `public/icons/`, built by `npm run icons` (`tools/build-icons.mjs`) — rerun after adding emoji to VOCABULARY. `createIcon()` falls back to the system emoji. Top-bar icons are inline SVG (`UI_ICONS`).
+- Round 2 still uses the old physics and card styling.
+
 ## Key Functions
 - `setupRound()` — initializes round, dispatches to mode-specific setup
 - `setupPongRound()` — L6 setup; calls `loadPongConversation(0, false)` (false = no auto-speak on start)

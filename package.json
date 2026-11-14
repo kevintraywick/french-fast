@@ -7,7 +7,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "icons": "node tools/build-icons.mjs"
   },
   "keywords": [],
   "author": "",
@@ -15,5 +16,9 @@
   "type": "commonjs",
   "dependencies": {
     "vite": "^7.3.1"
+  },
+  "devDependencies": {
+    "@iconify-json/fluent-emoji": "^1.2.7",
+    "@iconify-json/noto": "^1.2.10"
   }
 }
