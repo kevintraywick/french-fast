@@ -1492,7 +1492,7 @@ state.roundMaxPairs
     // front and fed onto the board a few pairs at a time.
     state.driftMode = state.currentRound === 1;
     document.body.classList.toggle('drift-mode', state.driftMode);
-    if (state.driftMode) targetPairs = 50;
+    if (state.driftMode) targetPairs = DRIFT_ROUND_PAIRS;
 
     let pool = state.driftMode
         ? [...basePool]
@@ -1534,7 +1534,7 @@ key: normalizeFrench(w.french)
     state.matchedKeys.clear();
     state.wrongCounts = {};
     state.matchedSteps = 0;
-    state.matchTarget = state.driftMode ? Math.min(50, state.roundWords.length) : 50;
+    state.matchTarget = state.driftMode ? Math.min(DRIFT_ROUND_PAIRS, state.roundWords.length) : 50;
     state.pairInjectPending = false;
     if (state.driftMode) {
         driftBounds = null;
@@ -1640,6 +1640,7 @@ if (pairIndex >= state.roundWords.length) {
 
 
 // ---- Drift mode (Round 1) -------------------------------------------------
+const DRIFT_ROUND_PAIRS = 25;   // matches needed to finish Round 1
 let driftBounds = null;
 
 function getDriftBounds() {
@@ -3666,6 +3667,8 @@ if (!quant) {
 state.selectedCard = card;
 card.frozen = true;
 card.element.classList.add('selected');
+// Round 1: a word tile says itself when picked, so the player hears it before matching
+if (state.driftMode && card.type === 'word') speakFrench(card.wordData.french);
     } else if (state.selectedCard.id === cardId) {
 state.selectedCard.frozen = false;
 state.selectedCard.element.classList.remove('selected');
@@ -3680,6 +3683,7 @@ if (first.type === second.type) {
     state.selectedCard = second;
     second.frozen = true;
     second.element.classList.add('selected');
+    if (state.driftMode && second.type === 'word') speakFrench(second.wordData.french);
     return;
 }
 

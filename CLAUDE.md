@@ -41,7 +41,8 @@ Vanilla JS French vocabulary game. No framework, no build step needed (uses Vite
 Round 1 no longer uses the ricochet physics. `state.driftMode` (true only when `currentRound === 1`) switches it to calm floating tiles:
 - **Physics**: `src/rounds/drift.js` — `stepDrift()` is called from `updateCards()`; tuning constants live in the `DRIFT` object (cruise 22 px/s at Medium). No bouncing, no speed boosts.
 - **Easy clicking**: the tile under the mouse stops; once a tile is selected the whole board slows to 28%.
-- **Board size**: 4–8 pairs on screen (`driftCapacity`), refilled one pair per match by `startDriftSpawning()`. All 50 round words are chosen up front — `injectNewPairs()` is not used in R1.
+- **Board size**: 4–8 pairs on screen (`driftCapacity`), refilled one pair per match by `startDriftSpawning()`. Round ends at 25 matches (`DRIFT_ROUND_PAIRS`); all 25 words are chosen up front — `injectNewPairs()` is not used in R1.
+- **Audio**: a word tile speaks its French when picked (R1 only), in addition to the pronunciation on every correct match.
 - **Vocabulary**: pictures + words only; numbers and colours are excluded from R1.
 - **Positioning**: drift tiles use the CSS `translate` property (not left/top), so `transform` stays free for hover/pop animations.
 - **Styling**: everything under `body.drift-mode` in `styles/main.css` ("pool" palette, Bricolage Grotesque). The timer and the right-edge progress bar are hidden in R1 by CSS only.
