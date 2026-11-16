@@ -1,6 +1,6 @@
 export default {
   root: '.',
-  base: '/fast-french/',
+  base: '/',
   build: {
     outDir: 'dist'
   }

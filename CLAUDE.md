@@ -5,6 +5,11 @@ Vanilla JS French vocabulary game. No framework, no build step needed (uses Vite
 - **Entry**: `index.html` → `src/main.js` (~4000+ lines, single file), `styles/main.css`
 - **Run**: `npm run dev` (Vite)
 
+## Hosting (changed 2026-11)
+- Deployed on Railway: project "kev web", service `french-fast`, auto-deploys on push to `main` of `kevintraywick/french-fast`.
+- Public address: `french.kevintraywick.com` (DNS at Hover). Served from the domain root, so `vite.config.js` uses `base: '/'`.
+- The old Dreamhost SFTP GitHub Action was removed; `kevintraywick.com/fast-french` is no longer the address.
+
 ## Git / GitHub
 - Upstream: `kevintraywick/french-fast` (original repo — file issues here)
 - Fork: `deliciousllc/french-fast-delicious` (origin remote)
